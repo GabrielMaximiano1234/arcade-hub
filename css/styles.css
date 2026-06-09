@@ -1,4 +1,4 @@
-/* ARCADE HUB - PREMIUM DARK STYLESHEET */
+/* ARCADE HUB - UNIFIED PREMIUM STYLE SHEET */
 
 /* Root variables defining color tokens and theme values */
 :root {
@@ -17,26 +17,33 @@
     --transition-normal: 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
     --transition-slow: 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 
-    /* Game-specific glow variables (vibrant gradients and shadows) */
-    --uno-color: #ff3b30;
-    --uno-glow: rgba(255, 59, 48, 0.4);
-    --uno-gradient: linear-gradient(135deg, #ff416c, #ff4b2b);
+    /* Game-specific variables */
+    --memoria-color: #ff3b30;
+    --memoria-glow: rgba(255, 59, 48, 0.4);
+    --memoria-gradient: linear-gradient(135deg, #ff416c, #ff4b2b);
 
-    --xadrez-color: #e2e8f0;
-    --xadrez-glow: rgba(226, 232, 240, 0.25);
-    --xadrez-gradient: linear-gradient(135deg, #e0e0e0, #2c3e50);
+    --cobrinha-color: #38ef7d;
+    --cobrinha-glow: rgba(56, 239, 125, 0.4);
+    --cobrinha-gradient: linear-gradient(135deg, #11998e, #38ef7d);
 
-    --damas-color: #ff9500;
-    --damas-glow: rgba(255, 149, 0, 0.4);
-    --damas-gradient: linear-gradient(135deg, #f2994a, #f2c94c);
+    --campo-minado-color: #f2994a;
+    --campo-minado-glow: rgba(242, 153, 74, 0.4);
+    --campo-minado-gradient: linear-gradient(135deg, #f2994a, #f2c94c);
 
-    --velha-color: #00f2fe;
-    --velha-glow: rgba(0, 242, 254, 0.45);
-    --velha-gradient: linear-gradient(135deg, #00f2fe, #4facfe);
+    --tetris-color: #9b51e0;
+    --tetris-glow: rgba(155, 81, 224, 0.4);
+    --tetris-gradient: linear-gradient(135deg, #00f2fe, #9b51e0);
 
-    --paciencia-color: #34c759;
-    --paciencia-glow: rgba(52, 199, 89, 0.4);
-    --paciencia-gradient: linear-gradient(135deg, #11998e, #38ef7d);
+    /* Color Pad Defaults */
+    --pad-green: #2ecc71;
+    --pad-red: #e74c3c;
+    --pad-yellow: #f1c40f;
+    --pad-blue: #3498db;
+    
+    --pad-green-active: #58d68d;
+    --pad-red-active: #ec7063;
+    --pad-yellow-active: #f4d03f;
+    --pad-blue-active: #5dade2;
 }
 
 /* Reset and base styles */
@@ -72,7 +79,7 @@ body {
     filter: blur(150px);
     pointer-events: none;
     z-index: 0;
-    opacity: 0.15;
+    opacity: 0.12;
 }
 .bg-glow-1 {
     top: -10%;
@@ -145,8 +152,8 @@ body {
 /* Responsive grid layout */
 .grid-games {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 2.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 2rem;
     justify-content: center;
     align-items: stretch;
     margin-bottom: 4rem;
@@ -171,7 +178,7 @@ body {
 
 /* Card inner structure */
 .card-inner {
-    padding: 2.5rem 2rem;
+    padding: 2.2rem 1.8rem;
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -179,11 +186,11 @@ body {
 
 /* Card SVG graphics area */
 .card-visual {
-    height: 140px;
+    height: 120px;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 2rem;
+    margin-bottom: 1.8rem;
     border-radius: 16px;
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid rgba(255, 255, 255, 0.03);
@@ -193,37 +200,37 @@ body {
 }
 
 .card-icon {
-    width: 90px;
-    height: 90px;
+    width: 80px;
+    height: 80px;
     transition: transform var(--transition-normal);
 }
 
 /* Game descriptions */
 .card-info h3 {
-    font-size: 1.6rem;
+    font-size: 1.45rem;
     font-weight: 700;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.6rem;
     letter-spacing: -0.5px;
     transition: color var(--transition-fast);
 }
 
 .card-info p {
     color: var(--text-secondary);
-    font-size: 0.95rem;
-    line-height: 1.6;
-    margin-bottom: 2rem;
-    min-height: 72px; /* Fix height for text alignment */
+    font-size: 0.92rem;
+    line-height: 1.55;
+    margin-bottom: 1.8rem;
+    min-height: 66px; /* Fix height for text alignment */
 }
 
 /* Premium Buttons */
 .btn-play {
     width: 100%;
-    padding: 1rem 1.5rem;
-    border-radius: 14px;
+    padding: 0.9rem 1.5rem;
+    border-radius: 12px;
     border: none;
     font-family: 'Outfit', sans-serif;
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 0.95rem;
     color: var(--text-primary);
     background: rgba(255, 255, 255, 0.08);
     cursor: pointer;
@@ -232,138 +239,77 @@ body {
     overflow: hidden;
 }
 
-.btn-play::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
-    transition: 0.5s;
+.btn-play:hover {
+    transform: scale(1.02);
 }
 
-.btn-play:hover::before {
-    left: 100%;
-}
-
-/* THEME: UNO */
-.card-uno:hover {
-    border-color: var(--uno-color);
-    box-shadow: 0 10px 30px var(--uno-glow);
+/* CARD THEMES HOVER */
+/* 1. MEMORIA */
+.card-memoria:hover {
+    border-color: var(--memoria-color);
+    box-shadow: 0 10px 30px var(--memoria-glow);
     transform: translateY(-8px);
 }
-.card-uno:hover .card-visual {
-    background: rgba(255, 59, 48, 0.06);
-}
-.card-uno:hover .card-icon {
-    transform: scale(1.1) rotate(5deg);
-}
-.card-uno:hover h3 {
-    color: var(--uno-color);
-}
-.card-uno:hover .btn-play {
-    background: var(--uno-gradient);
+.card-memoria:hover .card-visual { background: rgba(255, 59, 48, 0.06); }
+.card-memoria:hover .card-icon { transform: scale(1.08) rotate(5deg); }
+.card-memoria:hover h3 { color: var(--memoria-color); }
+.card-memoria:hover .btn-play {
+    background: var(--memoria-gradient);
     box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4);
-    transform: scale(1.02);
 }
 
-/* THEME: XADREZ */
-.card-xadrez:hover {
-    border-color: var(--xadrez-color);
-    box-shadow: 0 10px 30px var(--xadrez-glow);
+/* 2. COBRINHA */
+.card-cobrinha:hover {
+    border-color: var(--cobrinha-color);
+    box-shadow: 0 10px 30px var(--cobrinha-glow);
     transform: translateY(-8px);
 }
-.card-xadrez:hover .card-visual {
-    background: rgba(226, 232, 240, 0.05);
-}
-.card-xadrez:hover .card-icon {
-    transform: scale(1.1) translateY(-5px);
-}
-.card-xadrez:hover h3 {
-    color: var(--xadrez-color);
-}
-.card-xadrez:hover .btn-play {
-    background: var(--xadrez-gradient);
+.card-cobrinha:hover .card-visual { background: rgba(56, 239, 125, 0.06); }
+.card-cobrinha:hover .card-icon { transform: scale(1.08) translateY(-4px); }
+.card-cobrinha:hover h3 { color: var(--cobrinha-color); }
+.card-cobrinha:hover .btn-play {
+    background: var(--cobrinha-gradient);
     color: #0c0f16;
-    box-shadow: 0 4px 15px rgba(226, 232, 240, 0.3);
-    transform: scale(1.02);
+    box-shadow: 0 4px 15px rgba(56, 239, 125, 0.4);
 }
 
-/* THEME: DAMAS */
-.card-damas:hover {
-    border-color: var(--damas-color);
-    box-shadow: 0 10px 30px var(--damas-glow);
+/* 3. CAMPO MINADO */
+.card-campo-minado:hover {
+    border-color: var(--campo-minado-color);
+    box-shadow: 0 10px 30px var(--campo-minado-glow);
     transform: translateY(-8px);
 }
-.card-damas:hover .card-visual {
-    background: rgba(255, 149, 0, 0.06);
-}
-.card-damas:hover .card-icon {
-    transform: scale(1.1) rotate(-8deg);
-}
-.card-damas:hover h3 {
-    color: var(--damas-color);
-}
-.card-damas:hover .btn-play {
-    background: var(--damas-gradient);
+.card-campo-minado:hover .card-visual { background: rgba(255, 149, 0, 0.06); }
+.card-campo-minado:hover .card-icon { transform: scale(1.08) rotate(-5deg); }
+.card-campo-minado:hover h3 { color: var(--campo-minado-color); }
+.card-campo-minado:hover .btn-play {
+    background: var(--campo-minado-gradient);
     color: #0c0f16;
     box-shadow: 0 4px 15px rgba(255, 149, 0, 0.4);
-    transform: scale(1.02);
 }
 
-/* THEME: JOGO DA VELHA */
-.card-velha:hover {
-    border-color: var(--velha-color);
-    box-shadow: 0 10px 30px var(--velha-glow);
+/* 4. TETRIS */
+.card-tetris:hover {
+    border-color: var(--tetris-color);
+    box-shadow: 0 10px 30px var(--tetris-glow);
     transform: translateY(-8px);
 }
-.card-velha:hover .card-visual {
-    background: rgba(0, 242, 254, 0.06);
-}
-.card-velha:hover .card-icon {
-    transform: scale(1.1) rotate(15deg);
-}
-.card-velha:hover h3 {
-    color: var(--velha-color);
-}
-.card-velha:hover .btn-play {
-    background: var(--velha-gradient);
-    color: #0c0f16;
-    box-shadow: 0 4px 15px rgba(0, 242, 254, 0.4);
-    transform: scale(1.02);
+.card-tetris:hover .card-visual { background: rgba(155, 81, 224, 0.06); }
+.card-tetris:hover .card-icon { transform: scale(1.08) rotate(8deg); }
+.card-tetris:hover h3 { color: var(--tetris-color); }
+.card-tetris:hover .btn-play {
+    background: var(--tetris-gradient);
+    box-shadow: 0 4px 15px rgba(155, 81, 224, 0.4);
 }
 
-/* THEME: PACIÊNCIA */
-.card-paciencia:hover {
-    border-color: var(--paciencia-color);
-    box-shadow: 0 10px 30px var(--paciencia-glow);
-    transform: translateY(-8px);
-}
-.card-paciencia:hover .card-visual {
-    background: rgba(52, 199, 89, 0.06);
-}
-.card-paciencia:hover .card-icon {
-    transform: scale(1.1) translateY(-3px) rotate(-3deg);
-}
-.card-paciencia:hover h3 {
-    color: var(--paciencia-color);
-}
-.card-paciencia:hover .btn-play {
-    background: var(--paciencia-gradient);
-    color: #0c0f16;
-    box-shadow: 0 4px 15px rgba(52, 199, 89, 0.4);
-    transform: scale(1.02);
-}
-
-/* Game Play Arena (Hidden initially) */
+/* Game Play Screen styling */
 .game-screen {
     opacity: 1;
     transform: translateY(0);
     transition: opacity var(--transition-normal), transform var(--transition-normal);
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 1.5rem;
     flex-grow: 1;
 }
 
@@ -372,43 +318,174 @@ body {
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid var(--border-color);
-    padding-bottom: 1.5rem;
+    padding-bottom: 1rem;
 }
 
-.btn-back {
+.game-header-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #ffffff, #cbd5e1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.btn-back, .btn-reset {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
-    background: rgba(255, 255, 255, 0.05);
+    padding: 0.6rem 1.2rem;
+    background: rgba(255, 255, 255, 0.04);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
-    border-radius: 12px;
+    border-radius: 10px;
     font-family: 'Outfit', sans-serif;
     font-weight: 600;
+    font-size: 0.9rem;
     cursor: pointer;
     transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
 }
 
 .btn-back:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
     border-color: var(--border-hover);
-    transform: translateX(-4px);
+    transform: translateX(-3px);
 }
 
-.game-status-badge {
-    padding: 0.5rem 1rem;
-    border-radius: 99px;
-    background: rgba(79, 172, 254, 0.1);
-    border: 1px solid rgba(79, 172, 254, 0.2);
-    color: #4facfe;
-    font-size: 0.85rem;
-    font-weight: 600;
-    letter-spacing: 0.5px;
+.btn-reset:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--border-hover);
+    transform: scale(1.03);
+}
+
+/* Tutorial panel: Como Jogar */
+.tutorial-panel {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem 0;
+    width: 100%;
+}
+
+.tutorial-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    max-width: 580px;
+    width: 100%;
+    padding: 2.5rem;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    animation: fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeInScale {
+    0% { opacity: 0; transform: scale(0.95); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+.tutorial-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.tutorial-icon-wrapper {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.8rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.tutorial-header h3 {
+    font-size: 1.7rem;
+    font-weight: 700;
+}
+
+.tutorial-body h4 {
+    font-size: 1rem;
+    color: var(--text-muted);
     text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
 }
 
-/* Game Frame / Container area */
+.tutorial-body p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    font-size: 0.98rem;
+}
+
+.tutorial-controls-box {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    border-radius: 16px;
+    padding: 1.2rem;
+}
+
+.tutorial-controls-box h5 {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.6rem;
+}
+
+.tutorial-controls-box ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.tutorial-controls-box li {
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tutorial-controls-box li strong {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.06);
+    padding: 0.1rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.btn-start {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(90deg, #4facfe, #00f2fe);
+    color: #030406;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);
+}
+
+.btn-start:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 242, 254, 0.5);
+}
+
+/* Game Container Area */
 .game-frame-container {
     position: relative;
     border-radius: 24px;
@@ -417,7 +494,7 @@ body {
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     overflow: hidden;
-    min-height: 500px;
+    min-height: 520px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -436,98 +513,286 @@ body {
     filter: blur(80px);
     pointer-events: none;
     z-index: 0;
-    opacity: 0.08;
+    opacity: 0.12;
     transition: background var(--transition-slow);
 }
 
 .game-frame-content {
     z-index: 1;
-    text-align: center;
-    padding: 3rem;
-    max-width: 600px;
     width: 100%;
-}
-
-.game-title {
-    font-size: 2.8rem;
-    font-weight: 800;
-    margin-bottom: 1rem;
-    background: linear-gradient(135deg, #ffffff 50%, #cbd5e1 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.game-description {
-    color: var(--text-secondary);
-    font-size: 1.1rem;
-    line-height: 1.7;
-    margin-bottom: 3rem;
-}
-
-.game-placeholder-visual {
-    display: inline-flex;
+    display: flex;
+    justify-content: center;
     align-items: center;
-    gap: 0.75rem;
-    padding: 1rem 2rem;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: var(--text-secondary);
+    padding: 2rem;
 }
 
-.pulse-indicator {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: #4facfe;
-    position: relative;
-}
-
-.pulse-indicator::after {
-    content: '';
-    position: absolute;
+.game-view {
     width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background: inherit;
-    animation: pulse 2s infinite;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.4s ease;
 }
 
-/* Spinner loader styling */
-.loader-spinner {
-    width: 50px;
-    height: 50px;
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.game-status-hint {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    margin-top: 1.2rem;
+    text-align: center;
+}
+
+/* ==========================================================================
+   GAME 1: SEQUÊNCIA DE MEMÓRIA (SIMON)
+   ========================================================================== */
+.memory-scores {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.score-pill {
+    padding: 0.5rem 1rem;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-color);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.score-high {
+    border-color: rgba(255, 235, 59, 0.2);
+    color: #ffeb3b;
+    background: rgba(255, 235, 59, 0.05);
+}
+
+.memory-board-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    width: 280px;
+    height: 280px;
+}
+
+.memory-pad {
+    border-radius: 20px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.1s, transform 0.1s, box-shadow 0.1s;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.memory-pad:active {
+    transform: scale(0.96);
+}
+
+.pad-green {
+    background-color: var(--pad-green);
+    box-shadow: 0 0 10px rgba(46, 204, 113, 0.1);
+}
+.pad-green.active {
+    background-color: var(--pad-green-active);
+    opacity: 1;
+    box-shadow: 0 0 30px rgba(46, 204, 113, 0.8);
+}
+
+.pad-red {
+    background-color: var(--pad-red);
+    box-shadow: 0 0 10px rgba(231, 76, 60, 0.1);
+}
+.pad-red.active {
+    background-color: var(--pad-red-active);
+    opacity: 1;
+    box-shadow: 0 0 30px rgba(231, 76, 60, 0.8);
+}
+
+.pad-yellow {
+    background-color: var(--pad-yellow);
+    box-shadow: 0 0 10px rgba(241, 196, 15, 0.1);
+}
+.pad-yellow.active {
+    background-color: var(--pad-yellow-active);
+    opacity: 1;
+    box-shadow: 0 0 30px rgba(241, 196, 15, 0.8);
+}
+
+.pad-blue {
+    background-color: var(--pad-blue);
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.1);
+}
+.pad-blue.active {
+    background-color: var(--pad-blue-active);
+    opacity: 1;
+    box-shadow: 0 0 30px rgba(52, 152, 219, 0.8);
+}
+
+/* ==========================================================================
+   GAME 2: COBRINHA (SNAKE)
+   ========================================================================== */
+.game-score-display {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--cobrinha-color);
+}
+
+.canvas-wrapper {
+    background: #020306;
     border: 3px solid rgba(255, 255, 255, 0.05);
-    border-top: 3px solid #4facfe;
-    border-radius: 50%;
-    margin: 0 auto 2rem auto;
-    animation: spin 1s linear infinite;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    display: flex;
 }
 
-/* Keyframe animations */
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+canvas {
+    display: block;
+    max-width: 100%;
 }
 
-@keyframes pulse {
-    0% {
-        transform: scale(1);
-        opacity: 0.8;
-    }
-    100% {
-        transform: scale(2.2);
-        opacity: 0;
-    }
+/* ==========================================================================
+   GAME 3: CAMPO MINADO (MINESWEEPER)
+   ========================================================================== */
+.minesweeper-bar {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 320px;
+    margin-bottom: 1rem;
 }
 
-/* Layout Utilities */
+.status-em-jogo {
+    border-color: rgba(79, 172, 254, 0.2);
+    color: #4facfe;
+}
+.status-vitoria {
+    border-color: rgba(56, 239, 125, 0.2);
+    color: #38ef7d;
+    background: rgba(56, 239, 125, 0.05);
+}
+.status-derrota {
+    border-color: rgba(255, 59, 48, 0.2);
+    color: #ff3b30;
+    background: rgba(255, 59, 48, 0.05);
+}
+
+.minesweeper-grid-container {
+    padding: 8px;
+    background: #020306;
+    border: 3px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+#minesweeper-grid {
+    display: grid;
+    gap: 3px;
+}
+
+.mine-cell {
+    width: 30px;
+    height: 30px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 800;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+    transition: background var(--transition-fast);
+}
+
+.mine-cell:hover:not(.revealed) {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.mine-cell.revealed {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.02);
+    cursor: default;
+}
+
+.mine-cell.flagged {
+    color: #ff4b2b;
+}
+
+.mine-cell.mine {
+    background: #ff4b2b !important;
+    color: #fff;
+    border-color: #ff4b2b;
+}
+
+/* Number colors inside revealed cells */
+.mine-1 { color: #2d82b7; }
+.mine-2 { color: #42b883; }
+.mine-3 { color: #ff3366; }
+.mine-4 { color: #9b51e0; }
+.mine-5 { color: #f2c94c; }
+.mine-6 { color: #f2994a; }
+.mine-7 { color: #ff007f; }
+.mine-8 { color: #828282; }
+
+/* ==========================================================================
+   GAME 4: TETRIS
+   ========================================================================== */
+.tetris-game-layout {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.tetris-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 110px;
+}
+
+.score-box {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 0.8rem;
+    text-align: center;
+}
+
+.score-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.2rem;
+}
+
+.score-val {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.next-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#tetris-next-canvas {
+    background: #020306;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* General Layout Utilities */
 .hidden {
     display: none !important;
-    opacity: 0;
-    transform: translateY(20px);
 }
 
 /* App Footer styling */
@@ -552,10 +817,30 @@ body {
         grid-template-columns: 1fr;
         gap: 1.5rem;
     }
-    .game-frame-content {
+    .game-screen-header {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+    .game-header-title {
+        order: -1;
+        width: 100%;
+        text-align: center;
+        margin-bottom: 0.4rem;
+    }
+    .tutorial-card {
         padding: 1.5rem;
     }
-    .game-title {
-        font-size: 2.2rem;
+    .tetris-game-layout {
+        flex-direction: column;
+        align-items: center;
+    }
+    .tetris-sidebar {
+        flex-direction: row;
+        width: 100%;
+        justify-content: space-between;
+    }
+    .score-box {
+        flex-grow: 1;
     }
 }
