@@ -249,8 +249,31 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
+// Global utility for Toast notifications
+function exibirToast(mensagem, tipo = 'success') {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${tipo}`;
+    toast.textContent = mensagem;
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
 // ==========================================================================
-// GAME 1: UNO ENGINE (LOCAL PLAYER VS 3 BOTS)
+// GAME 1: UNO ENGINE (LOCAL PLAYER VS 3 BOTS - ADVANCED COMBOS & RULES)
 // ==========================================================================
 class UnoGame {
     constructor() {
@@ -262,6 +285,7 @@ class UnoGame {
         this.currentColor = '';
         this.unoShouted = false;
         this.isGameOver = false;
+        this.accumulatedPenalty = 0; // Stacking draw count
 
         this.colors = ['Red', 'Blue', 'Green', 'Yellow'];
         this.values = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'Skip', 'Reverse', 'DrawTwo'];
@@ -293,6 +317,7 @@ class UnoGame {
         this.direction = 1;
         this.currentPlayerIdx = 0;
         this.unoShouted = false;
+        this.accumulatedPenalty = 0;
 
         this.deck = [];
         this.discardPile = [];
@@ -359,35 +384,14 @@ class UnoGame {
         const handSize = this.players[0].length;
         if (handSize === 1) {
             this.unoShouted = true;
-            this.exibirToast("🚨 UNO! Declarado com sucesso!", "success");
+            exibirToast("🚨 UNO! Declarado com sucesso!", "success");
             this.shoutBtn.classList.remove('pulse-glow');
         } else {
             this.unoShouted = false;
             this.players[0].push(this.comprarCard());
             this.players[0].push(this.comprarCard());
-            this.exibirToast("❌ Blefe! Você não tem exatamente 1 carta. Punição: Compre 2 cartas.", "error");
+            exibirToast("❌ Blefe! Você não tem exatamente 1 carta. Punição: Compre 2 cartas.", "error");
             this.atualizarInterface();
-        }
-    }
-
-    compreCardJogador() {
-        if (this.isGameOver || this.currentPlayerIdx !== 0) return;
-        
-        // Draw card
-        const card = this.comprarCard();
-        this.players[0].push(card);
-        
-        // Check if drawn card is playable
-        if (this.ehJogavel(card)) {
-            // Give them a moment to play it
-            this.atualizarInterface();
-            this.turnIndicator.textContent = 'Você comprou e pode jogar esta carta!';
-        } else {
-            // Auto pass
-            this.turnIndicator.textContent = 'Nenhuma carta jogável. Passando turno...';
-            this.registerTimeout(() => {
-                this.passarTurno();
-            }, 1000);
         }
     }
 
@@ -403,6 +407,11 @@ class UnoGame {
     }
 
     ehJogavel(card) {
+        // If there's an active penalty accumulation, only +2 or +4 can be played!
+        if (this.accumulatedPenalty > 0) {
+            return card.value === 'DrawTwo' || card.value === 'WildDrawFour';
+        }
+
         const topCard = this.discardPile[this.discardPile.length - 1];
         if (card.color === 'Wild' || card.color === this.currentColor || card.value === topCard.value) {
             return true;
@@ -457,6 +466,17 @@ class UnoGame {
         } else {
             this.shoutBtn.classList.remove('pulse-glow');
         }
+
+        // 5. Update combo badge
+        const comboBadge = document.getElementById('uno-combo-badge');
+        if (comboBadge) {
+            if (this.accumulatedPenalty > 0) {
+                comboBadge.classList.remove('hidden');
+                comboBadge.textContent = `🔥 Combo: +${this.accumulatedPenalty}`;
+            } else {
+                comboBadge.classList.add('hidden');
+            }
+        }
     }
 
     jogarCartaJogador(index) {
@@ -464,7 +484,7 @@ class UnoGame {
         const card = this.players[0][index];
 
         if (!this.ehJogavel(card)) {
-            alert('Esta carta não pode ser jogada!');
+            exibirToast('Esta carta não pode ser jogada!', 'error');
             return;
         }
 
@@ -473,12 +493,17 @@ class UnoGame {
         this.discardPile.push(card);
         this.currentColor = card.color;
 
-        // Shout status is checked dynamically in definirTurno() before next player plays
-
         // Check victory
         if (this.players[0].length === 0) {
             this.declararVencedor('Você');
             return;
+        }
+
+        // Apply accumulation
+        if (card.value === 'DrawTwo') {
+            this.accumulatedPenalty += 2;
+        } else if (card.value === 'WildDrawFour') {
+            this.accumulatedPenalty += 4;
         }
 
         // Resolve Action Card
@@ -500,16 +525,6 @@ class UnoGame {
             
             // Cleanup events
             pickers.forEach(b => b.removeEventListener('click', pickHandler));
-
-            const topCard = this.discardPile[this.discardPile.length - 1];
-            if (topCard.value === 'WildDrawFour') {
-                const nextPlayer = this.obterProximoJogador();
-                this.players[nextPlayer].push(this.comprarCard());
-                this.players[nextPlayer].push(this.comprarCard());
-                this.players[nextPlayer].push(this.comprarCard());
-                this.players[nextPlayer].push(this.comprarCard());
-                this.inverterOuPular(true); // skips next player
-            }
             
             this.passarTurno();
         };
@@ -523,14 +538,8 @@ class UnoGame {
         } else if (card.value === 'Reverse') {
             this.direction *= -1;
             if (this.players.length === 2) {
-                // In 2 player, reverse behaves like Skip
                 this.inverterOuPular(true);
             }
-        } else if (card.value === 'DrawTwo') {
-            const nextPlayer = this.obterProximoJogador();
-            this.players[nextPlayer].push(this.comprarCard());
-            this.players[nextPlayer].push(this.comprarCard());
-            this.inverterOuPular(true);
         }
     }
 
@@ -562,7 +571,7 @@ class UnoGame {
             if (this.players[0].length === 1 && !this.unoShouted) {
                 this.players[0].push(this.comprarCard());
                 this.players[0].push(this.comprarCard());
-                this.exibirToast("⚠️ Você esqueceu de gritar UNO! Punição: Compre 2 cartas.", "error");
+                exibirToast("⚠️ Você esqueceu de gritar UNO! Punição: Compre 2 cartas.", "error");
                 this.atualizarInterface();
             }
             this.unoShouted = false;
@@ -579,90 +588,107 @@ class UnoGame {
         this.registerTimeout(() => {
             if (this.isGameOver || this.currentPlayerIdx !== botIdx) return;
 
-            // Find playable cards
-            let playableCardIdx = -1;
-            for (let i = 0; i < hand.length; i++) {
-                if (this.ehJogavel(hand[i])) {
-                    playableCardIdx = i;
-                    break;
+            // 1. If there's an active penalty accumulation
+            if (this.accumulatedPenalty > 0) {
+                // Find a +2 or +4 in hand to defend/stack
+                let defendCardIdx = hand.findIndex(c => c.value === 'DrawTwo' || c.value === 'WildDrawFour');
+                
+                if (defendCardIdx !== -1) {
+                    const card = hand.splice(defendCardIdx, 1)[0];
+                    this.discardPile.push(card);
+                    this.currentColor = card.color;
+
+                    const add = card.value === 'DrawTwo' ? 2 : 4;
+                    this.accumulatedPenalty += add;
+
+                    exibirToast(`🔥 Bot ${botIdx} empilhou ${this.traduzirCardVal(card)}! Combo: +${this.accumulatedPenalty}`, "error");
+
+                    if (card.color === 'Wild') {
+                        this.currentColor = this.obterMelhorCorBot(hand);
+                    }
+
+                    if (hand.length === 1) {
+                        exibirToast(`🤖 Bot ${botIdx} gritou: UNO!`, "info");
+                    }
+                    if (hand.length === 0) {
+                        this.declararVencedor(`Bot ${botIdx}`);
+                        return;
+                    }
+
+                    this.passarTurno();
+                } else {
+                    // Cannot defend, must draw accumulated penalty and pass turn
+                    for (let k = 0; k < this.accumulatedPenalty; k++) {
+                        hand.push(this.comprarCard());
+                    }
+                    exibirToast(`⚠️ Bot ${botIdx} levou a punição de ${this.accumulatedPenalty} cartas e perdeu a vez!`, "info");
+                    this.accumulatedPenalty = 0;
+                    this.passarTurno();
                 }
+                return;
             }
 
+            // 2. Normal turn (no penalty accumulation)
+            let playableCardIdx = hand.findIndex(c => this.ehJogavel(c));
+
             if (playableCardIdx !== -1) {
-                // Play card
                 const card = hand.splice(playableCardIdx, 1)[0];
                 this.discardPile.push(card);
                 this.currentColor = card.color;
 
-                // Simple simulated shouting
-                if (hand.length === 1) {
-                    this.turnIndicator.textContent = `Bot ${botIdx} gritou: UNO!`;
+                if (card.value === 'DrawTwo') {
+                    this.accumulatedPenalty += 2;
+                } else if (card.value === 'WildDrawFour') {
+                    this.accumulatedPenalty += 4;
                 }
 
-                // Check victory
+                if (hand.length === 1) {
+                    exibirToast(`🤖 Bot ${botIdx} gritou: UNO!`, "info");
+                }
                 if (hand.length === 0) {
                     this.declararVencedor(`Bot ${botIdx}`);
                     return;
                 }
 
-                // Resolve effect
                 if (card.color === 'Wild') {
-                    // Pick a random color from bot hand or red by default
-                    const colorCounts = { 'Red': 0, 'Blue': 0, 'Green': 0, 'Yellow': 0 };
-                    hand.forEach(c => {
-                        if (colorCounts[c.color] !== undefined) colorCounts[c.color]++;
-                    });
-                    let bestColor = 'Red';
-                    let maxCount = -1;
-                    Object.keys(colorCounts).forEach(col => {
-                        if (colorCounts[col] > maxCount) {
-                            maxCount = colorCounts[col];
-                            bestColor = col;
-                        }
-                    });
-                    this.currentColor = bestColor;
-
-                    if (card.value === 'WildDrawFour') {
-                        const nextPlayer = this.obterProximoJogador();
-                        this.players[nextPlayer].push(this.comprarCard());
-                        this.players[nextPlayer].push(this.comprarCard());
-                        this.players[nextPlayer].push(this.comprarCard());
-                        this.players[nextPlayer].push(this.comprarCard());
-                        this.inverterOuPular(true);
-                    }
+                    this.currentColor = this.obterMelhorCorBot(hand);
                     this.passarTurno();
                 } else {
                     this.aplicarEfeitoCarta(card);
                     this.passarTurno();
                 }
             } else {
-                // No playables, must draw card
-                const card = this.comprarCard();
-                hand.push(card);
-                this.turnIndicator.textContent = `Bot ${botIdx} comprou uma carta.`;
+                // No playables, Bot must draw cards until it finds a playable one
+                let cardsDrawn = 0;
+                let foundPlayable = false;
 
-                // If drawn is playable, immediately play it
-                if (this.ehJogavel(card)) {
-                    this.registerTimeout(() => {
-                        hand.pop();
+                while (!foundPlayable) {
+                    const card = this.comprarCard();
+                    cardsDrawn++;
+
+                    if (this.ehJogavel(card)) {
+                        foundPlayable = true;
                         this.discardPile.push(card);
                         this.currentColor = card.color;
-                        
-                        if (hand.length === 0) {
-                            this.declararVencedor(`Bot ${botIdx}`);
-                            return;
+
+                        if (card.value === 'DrawTwo') {
+                            this.accumulatedPenalty += 2;
+                        } else if (card.value === 'WildDrawFour') {
+                            this.accumulatedPenalty += 4;
                         }
 
+                        exibirToast(`🤖 Bot ${botIdx} comprou ${cardsDrawn} cartas até achar e jogar!`, "info");
+
                         if (card.color === 'Wild') {
-                            this.currentColor = 'Blue'; // default bot pick color
+                            this.currentColor = this.obterMelhorCorBot(hand);
                             this.passarTurno();
                         } else {
                             this.aplicarEfeitoCarta(card);
                             this.passarTurno();
                         }
-                    }, 500);
-                } else {
-                    this.passarTurno();
+                    } else {
+                        hand.push(card);
+                    }
                 }
             }
         }, 1100);
@@ -671,7 +697,7 @@ class UnoGame {
     declararVencedor(name) {
         this.isGameOver = true;
         this.turnIndicator.textContent = `Fim de Jogo! ${name} venceu a partida de Uno!`;
-        alert(`Fim de Jogo! ${name} ganhou!`);
+        exibirToast(`🏆 Fim de Jogo! ${name} ganhou a partida de Uno!`, "success");
     }
 
     traduzirCor(col) {
@@ -704,32 +730,77 @@ class UnoGame {
 
     sacarCartaJogador() {
         if (this.isGameOver || this.currentPlayerIdx !== 0) return;
-        const card = this.comprarCard();
-        this.players[0].push(card);
-        this.exibirToast("🃏 Carta comprada! Passando o turno...", "info");
-        this.passarTurno();
+        
+        if (this.accumulatedPenalty > 0) {
+            // Draw accumulated penalty and pass turn
+            for (let k = 0; k < this.accumulatedPenalty; k++) {
+                this.players[0].push(this.comprarCard());
+            }
+            exibirToast(`⚠️ Você comprou ${this.accumulatedPenalty} cartas de punição e perdeu a vez!`, "error");
+            this.accumulatedPenalty = 0;
+            this.passarTurno();
+        } else {
+            // Draw until playable is found
+            this.compraAteAcharJogador();
+        }
     }
 
-    exibirToast(mensagem, tipo = 'success') {
-        let container = document.getElementById('toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'toast-container';
-            document.body.appendChild(container);
-        }
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${tipo}`;
-        toast.textContent = mensagem;
-        container.appendChild(toast);
+    compraAteAcharJogador() {
+        let cardsDrawn = 0;
+        let foundPlayable = false;
         
-        setTimeout(() => {
-            toast.classList.add('show');
-        }, 10);
+        while (!foundPlayable) {
+            const card = this.comprarCard();
+            cardsDrawn++;
+            
+            if (this.ehJogavel(card)) {
+                foundPlayable = true;
+                exibirToast(`🃏 Comprou ${cardsDrawn} cartas até achar ${this.traduzirCardVal(card)}! Jogada automática realizada.`, "success");
+                
+                this.discardPile.push(card);
+                this.currentColor = card.color;
 
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
+                if (card.color === 'Wild') {
+                    if (card.value === 'WildDrawFour') {
+                        this.accumulatedPenalty += 4;
+                    }
+                    this.exibirColorPicker();
+                } else {
+                    if (card.value === 'DrawTwo') {
+                        this.accumulatedPenalty += 2;
+                    }
+                    this.aplicarEfeitoCarta(card);
+                    this.passarTurno();
+                }
+            } else {
+                this.players[0].push(card);
+            }
+        }
+        this.atualizarInterface();
+    }
+
+    traduzirCardVal(card) {
+        const colorsTrans = { 'Red': 'Vermelho', 'Blue': 'Azul', 'Green': 'Verde', 'Yellow': 'Amarelo', 'Wild': 'Coringa' };
+        const valTrans = { 'Skip': 'Bloqueio', 'Reverse': 'Inversão', 'DrawTwo': '+2', 'Wild': 'Coringa', 'WildDrawFour': '+4' };
+        const col = colorsTrans[card.color] || card.color;
+        const val = valTrans[card.value] || card.value;
+        return `${val} (${col})`;
+    }
+
+    obterMelhorCorBot(hand) {
+        const colorCounts = { 'Red': 0, 'Blue': 0, 'Green': 0, 'Yellow': 0 };
+        hand.forEach(c => {
+            if (colorCounts[c.color] !== undefined) colorCounts[c.color]++;
+        });
+        let bestColor = 'Red';
+        let maxCount = -1;
+        Object.keys(colorCounts).forEach(col => {
+            if (colorCounts[col] > maxCount) {
+                maxCount = colorCounts[col];
+                bestColor = col;
+            }
+        });
+        return bestColor;
     }
 }
 
@@ -1159,7 +1230,7 @@ class SolitaireGame {
         if (totalFound === 52) {
             this.statusText.textContent = 'Parabéns! Você venceu a Paciência!';
             this.statusText.style.color = '#ffeb3b';
-            alert('Parabéns! Você venceu a Paciência!');
+            exibirToast('🎉 Parabéns! Você venceu o jogo de Paciência!', 'success');
         }
     }
 
