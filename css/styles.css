@@ -1718,3 +1718,83 @@ canvas {
         font-size: 1.7rem;
     }
 }
+
+/* Uno custom highlights & Toasts styling */
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.toast {
+    background: rgba(18, 20, 32, 0.95);
+    border: 1px solid var(--border-color);
+    padding: 0.8rem 1.6rem;
+    border-radius: 12px;
+    color: #fff;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    transform: translateY(-20px);
+    opacity: 0;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+    backdrop-filter: blur(8px);
+}
+
+.toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.toast-success {
+    border-color: #38ef7d;
+    box-shadow: 0 0 15px rgba(56, 239, 125, 0.2), 0 10px 25px rgba(0, 0, 0, 0.5);
+    background: linear-gradient(135deg, rgba(18, 20, 32, 0.95), rgba(56, 239, 125, 0.05));
+}
+
+.toast-error {
+    border-color: #ff4b2b;
+    box-shadow: 0 0 15px rgba(255, 75, 43, 0.2), 0 10px 25px rgba(0, 0, 0, 0.5);
+    background: linear-gradient(135deg, rgba(18, 20, 32, 0.95), rgba(255, 75, 43, 0.05));
+}
+
+#uno-shout-btn {
+    position: relative;
+    cursor: pointer;
+    font-weight: 700;
+    transition: all var(--transition-fast);
+}
+
+#uno-shout-btn.pulse-glow {
+    animation: unoShoutPulse 1.2s infinite alternate;
+    box-shadow: 0 0 20px rgba(255, 59, 48, 0.8) !important;
+    border-color: #ff3b30 !important;
+}
+
+@keyframes unoShoutPulse {
+    from {
+        transform: scale(1);
+    }
+    to {
+        transform: scale(1.05);
+    }
+}
+
+#uno-draw-btn {
+    background: linear-gradient(90deg, #4facfe, #00f2fe) !important;
+    color: #030406 !important;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+#uno-draw-btn:hover {
+    box-shadow: 0 0 15px rgba(0, 242, 254, 0.6) !important;
+    transform: scale(1.03);
+}

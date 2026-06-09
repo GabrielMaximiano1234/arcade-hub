@@ -280,6 +280,7 @@ class UnoGame {
         
         this.playerHandDiv = document.getElementById('uno-player-hand');
         this.shoutBtn = document.getElementById('uno-shout-btn');
+        this.drawBtn = document.getElementById('uno-draw-btn');
         this.turnIndicator = document.getElementById('uno-turn-indicator');
         this.colorPickerDiv = document.getElementById('uno-color-picker');
 
@@ -299,6 +300,9 @@ class UnoGame {
 
         this.shoutBtn.classList.remove('hidden');
         this.shoutBtn.addEventListener('click', () => this.gritarUno());
+        if (this.drawBtn) {
+            this.drawBtn.addEventListener('click', () => this.sacarCartaJogador());
+        }
 
         // 1. Generate Uno Deck (108 cards)
         this.colors.forEach(color => {
@@ -337,7 +341,7 @@ class UnoGame {
         this.currentColor = firstCard.color;
 
         // 4. Update visuals
-        this.drawPileDiv.addEventListener('click', () => this.compreCardJogador());
+        this.drawPileDiv.addEventListener('click', () => this.sacarCartaJogador());
         this.atualizarInterface();
 
         this.definirTurno();
@@ -351,9 +355,19 @@ class UnoGame {
     }
 
     gritarUno() {
-        if (this.isGameOver) return;
-        this.unoShouted = true;
-        alert('Você gritou UNO!');
+        if (this.isGameOver || this.currentPlayerIdx !== 0) return;
+        const handSize = this.players[0].length;
+        if (handSize === 1) {
+            this.unoShouted = true;
+            this.exibirToast("🚨 UNO! Declarado com sucesso!", "success");
+            this.shoutBtn.classList.remove('pulse-glow');
+        } else {
+            this.unoShouted = false;
+            this.players[0].push(this.comprarCard());
+            this.players[0].push(this.comprarCard());
+            this.exibirToast("❌ Blefe! Você não tem exatamente 1 carta. Punição: Compre 2 cartas.", "error");
+            this.atualizarInterface();
+        }
     }
 
     compreCardJogador() {
@@ -436,6 +450,13 @@ class UnoGame {
             }
             this.playerHandDiv.appendChild(cardEl);
         });
+
+        // 4. Toggle shout button glow based on card count
+        if (this.players[0].length === 1 && !this.unoShouted) {
+            this.shoutBtn.classList.add('pulse-glow');
+        } else {
+            this.shoutBtn.classList.remove('pulse-glow');
+        }
     }
 
     jogarCartaJogador(index) {
@@ -452,13 +473,7 @@ class UnoGame {
         this.discardPile.push(card);
         this.currentColor = card.color;
 
-        // Enforce Uno Penalty if cards === 1 and not shouted
-        if (this.players[0].length === 1 && !this.unoShouted) {
-            alert('Você esqueceu de gritar UNO! Penalidade: Compre 2 cartas.');
-            this.players[0].push(this.comprarCard());
-            this.players[0].push(this.comprarCard());
-        }
-        this.unoShouted = false;
+        // Shout status is checked dynamically in definirTurno() before next player plays
 
         // Check victory
         if (this.players[0].length === 0) {
@@ -543,6 +558,15 @@ class UnoGame {
         if (this.currentPlayerIdx === 0) {
             this.turnIndicator.textContent = 'Seu Turno! Jogue uma carta ou compre.';
         } else {
+            // Check if player forgot to shout UNO when they have exactly 1 card
+            if (this.players[0].length === 1 && !this.unoShouted) {
+                this.players[0].push(this.comprarCard());
+                this.players[0].push(this.comprarCard());
+                this.exibirToast("⚠️ Você esqueceu de gritar UNO! Punição: Compre 2 cartas.", "error");
+                this.atualizarInterface();
+            }
+            this.unoShouted = false;
+
             this.turnIndicator.textContent = `Turno do Bot ${this.currentPlayerIdx}...`;
             this.jogadaBot();
         }
@@ -672,6 +696,40 @@ class UnoGame {
         this.drawPileDiv = document.getElementById('uno-draw-pile');
         this.shoutBtn.replaceWith(this.shoutBtn.cloneNode(true));
         this.shoutBtn = document.getElementById('uno-shout-btn');
+        if (this.drawBtn) {
+            this.drawBtn.replaceWith(this.drawBtn.cloneNode(true));
+            this.drawBtn = document.getElementById('uno-draw-btn');
+        }
+    }
+
+    sacarCartaJogador() {
+        if (this.isGameOver || this.currentPlayerIdx !== 0) return;
+        const card = this.comprarCard();
+        this.players[0].push(card);
+        this.exibirToast("🃏 Carta comprada! Passando o turno...", "info");
+        this.passarTurno();
+    }
+
+    exibirToast(mensagem, tipo = 'success') {
+        let container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            document.body.appendChild(container);
+        }
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${tipo}`;
+        toast.textContent = mensagem;
+        container.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 10);
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
     }
 }
 
