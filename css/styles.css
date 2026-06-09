@@ -1,4 +1,4 @@
-/* ARCADE HUB - UNIFIED MEGA STYLESHEET (9 GAMES) */
+/* ARCADE HUB - UNIFIED MEGA STYLESHEET (9 GAMES + REAL BOARDS) */
 
 /* Root variables defining color tokens and theme values */
 :root {
@@ -64,6 +64,10 @@
     --pad-red-active: #ec7063;
     --pad-yellow-active: #f4d03f;
     --pad-blue-active: #5dade2;
+
+    /* Board color definitions (UI/UX Pro Max) */
+    --sq-chumbo: #1b212c;      /* dark squares */
+    --sq-noturno: #0e131f;     /* light squares */
 }
 
 /* Reset and base styles */
@@ -641,6 +645,12 @@ body {
     text-align: center;
 }
 
+.active-player-text {
+    font-weight: 800;
+    color: #00f2fe;
+    text-shadow: 0 0 10px rgba(0, 242, 254, 0.5);
+}
+
 /* ==========================================================================
    GAME 0: CLASSIC GAME PLACEHOLDER (COMING SOON)
    ========================================================================== */
@@ -690,7 +700,228 @@ body {
 }
 
 /* ==========================================================================
-   GAME 1: SEQUÊNCIA DE MEMÓRIA (SIMON)
+   GAME 1: JOGO DA VELHA (TIC-TAC-TOE)
+   ========================================================================== */
+.velha-grid-container {
+    padding: 12px;
+    background: #020306;
+    border: 3px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+#velha-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 100px);
+    grid-template-rows: repeat(3, 100px);
+    gap: 8px;
+}
+
+.velha-cell {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    cursor: pointer;
+    font-size: 3rem;
+    font-weight: 800;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+    transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.velha-cell:hover:not(.x):not(.o) {
+    background: rgba(255, 255, 255, 0.09);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: scale(1.02);
+}
+
+.velha-cell.x {
+    color: #ff4b2b;
+    text-shadow: 0 0 12px rgba(255, 75, 43, 0.5);
+}
+
+.velha-cell.o {
+    color: #00f2fe;
+    text-shadow: 0 0 12px rgba(0, 242, 254, 0.5);
+}
+
+.velha-cell.win-highlight {
+    background: rgba(56, 239, 125, 0.15) !important;
+    border-color: #38ef7d !important;
+    animation: winFlash 1s infinite alternate;
+}
+
+@keyframes winFlash {
+    from { box-shadow: 0 0 5px rgba(56, 239, 125, 0.3); }
+    to { box-shadow: 0 0 15px rgba(56, 239, 125, 0.7); }
+}
+
+/* ==========================================================================
+   GAME 2 & 3: BOARD GRID SYSTEM (DAMAS & XADREZ)
+   ========================================================================== */
+.board-grid-wrapper {
+    background: #020306;
+    border: 4px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6);
+    display: flex;
+}
+
+.board-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 50px);
+    grid-template-rows: repeat(8, 50px);
+    width: 400px;
+    height: 400px;
+}
+
+.square-inner {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    user-select: none;
+}
+
+.dark-square {
+    background-color: var(--sq-chumbo);
+}
+
+.light-square {
+    background-color: var(--sq-noturno);
+}
+
+.selected-square {
+    box-shadow: inset 0 0 0 3px #ff9500;
+}
+
+.valid-move::after {
+    content: '';
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-color: rgba(56, 239, 125, 0.6);
+    box-shadow: 0 0 8px rgba(56, 239, 125, 0.8);
+    pointer-events: none;
+    position: absolute;
+}
+
+.valid-move-capture::after {
+    content: '';
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 59, 48, 0.6);
+    box-shadow: 0 0 8px rgba(255, 59, 48, 0.5);
+    pointer-events: none;
+    position: absolute;
+}
+
+/* Damas specifics */
+.checkers-scores {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+}
+
+.score-red {
+    border-color: rgba(255, 75, 43, 0.2);
+    color: #ff4b2b;
+    background: rgba(255, 75, 43, 0.05);
+}
+
+.score-black {
+    border-color: rgba(148, 163, 184, 0.2);
+    color: #cbd5e1;
+    background: rgba(148, 163, 184, 0.05);
+}
+
+.checker-piece {
+    width: 78%;
+    height: 78%;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5), inset 0 -4px 6px rgba(0,0,0,0.4), inset 0 4px 6px rgba(255,255,255,0.25);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    position: relative;
+    border: 1px solid rgba(0,0,0,0.5);
+}
+
+.checker-piece::after {
+    content: '';
+    position: absolute;
+    top: 15%;
+    left: 15%;
+    width: 70%;
+    height: 70%;
+    border-radius: 50%;
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+}
+
+.checker-piece:hover {
+    transform: scale(1.08);
+}
+
+.piece-red {
+    background: radial-gradient(circle at 35% 35%, #ff5b4f, #d62c1a);
+}
+
+.piece-black {
+    background: radial-gradient(circle at 35% 35%, #475569, #1e293b);
+}
+
+/* King Dama badge */
+.checker-piece.king::before {
+    content: '👑';
+    font-size: 0.95rem;
+    color: #ffeb3b;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+    z-index: 10;
+}
+
+.checker-piece.king {
+    border: 2px solid #ffeb3b;
+    box-shadow: 0 0 10px rgba(255, 235, 95, 0.4), 0 4px 8px rgba(0,0,0,0.5);
+}
+
+/* Chess specifics */
+.chess-piece {
+    font-size: 2.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    transition: transform var(--transition-fast);
+}
+
+.chess-piece:hover {
+    transform: scale(1.12);
+}
+
+/* Contrast adjustment for dark vs light chess unicode pieces */
+.chess-white {
+    color: #f8fafc;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8), 0 0 4px rgba(255,255,255,0.4);
+}
+
+.chess-black {
+    color: #38bdf8; /* Soft blue to make dark pieces highly visible and beautiful in dark mode */
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8), 0 0 4px rgba(56, 189, 248, 0.3);
+}
+
+/* ==========================================================================
+   GAME 4: SEQUÊNCIA DE MEMÓRIA (SIMON)
    ========================================================================== */
 .memory-scores {
     display: flex;
@@ -774,7 +1005,7 @@ body {
 }
 
 /* ==========================================================================
-   GAME 2: COBRINHA (SNAKE)
+   GAME 5: COBRINHA (SNAKE)
    ========================================================================== */
 .game-score-display {
     font-size: 1.3rem;
@@ -798,7 +1029,7 @@ canvas {
 }
 
 /* ==========================================================================
-   GAME 3: CAMPO MINADO (MINESWEEPER)
+   GAME 6: CAMPO MINADO (MINESWEEPER)
    ========================================================================== */
 .minesweeper-bar {
     display: flex;
@@ -883,7 +1114,7 @@ canvas {
 .mine-8 { color: #828282; }
 
 /* ==========================================================================
-   GAME 4: TETRIS
+   GAME 7: TETRIS
    ========================================================================== */
 .tetris-game-layout {
     display: flex;
@@ -984,5 +1215,14 @@ canvas {
     }
     .score-box {
         flex-grow: 1;
+    }
+    .board-grid {
+        width: 320px;
+        height: 320px;
+        grid-template-columns: repeat(8, 40px);
+        grid-template-rows: repeat(8, 40px);
+    }
+    .chess-piece {
+        font-size: 1.95rem;
     }
 }

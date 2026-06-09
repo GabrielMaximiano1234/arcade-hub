@@ -36,31 +36,49 @@ document.addEventListener('DOMContentLoaded', () => {
             viewId: 'game-view-placeholder',
             builder: () => new PlaceholderGame('Uno')
         },
-        xadrez: {
-            title: 'Xadrez',
-            glowColor: 'rgba(226, 232, 240, 0.25)',
-            viewId: 'game-view-placeholder',
-            builder: () => new PlaceholderGame('Xadrez')
-        },
-        damas: {
-            title: 'Damas',
-            glowColor: 'rgba(255, 149, 0, 0.4)',
-            viewId: 'game-view-placeholder',
-            builder: () => new PlaceholderGame('Damas')
-        },
-        velha: {
-            title: 'Jogo da Velha',
-            glowColor: 'rgba(0, 242, 254, 0.4)',
-            viewId: 'game-view-placeholder',
-            builder: () => new PlaceholderGame('Jogo da Velha')
-        },
         paciencia: {
             title: 'Paciência',
             glowColor: 'rgba(52, 199, 89, 0.4)',
             viewId: 'game-view-placeholder',
             builder: () => new PlaceholderGame('Paciência')
         },
-        // Active Playable Games
+        // Playable Board Games
+        velha: {
+            title: 'Jogo da Velha',
+            icon: '❌',
+            description: 'Partida local clássica de Jogo da Velha para dois jogadores. Alinhe três símbolos idênticos horizontalmente, verticalmente ou diagonalmente para vencer.',
+            controls: [
+                { key: 'Clique Esquerdo', desc: 'Posiciona o símbolo da rodada (X ou O) em uma célula vazia.' }
+            ],
+            glowColor: 'rgba(0, 242, 254, 0.4)',
+            viewId: 'game-view-velha',
+            builder: () => new TicTacToeGame()
+        },
+        damas: {
+            title: 'Damas',
+            icon: '🔴',
+            description: 'Confronte seu adversário local no jogo de Damas. Desloque peças diagonalmente, capture as peças rivais saltando sobre elas e promova suas peças a Dama ao alcançar a última fileira.',
+            controls: [
+                { key: 'Clique Esquerdo (Selecionar)', desc: 'Escolhe uma peça da sua cor. As casas de movimento válidas serão iluminadas.' },
+                { key: 'Clique Esquerdo (Mover)', desc: 'Pressione a casa iluminada de destino para deslocar ou realizar capturas.' }
+            ],
+            glowColor: 'rgba(255, 149, 0, 0.4)',
+            viewId: 'game-view-damas',
+            builder: () => new CheckersGame()
+        },
+        xadrez: {
+            title: 'Xadrez',
+            icon: '👑',
+            description: 'O clássico duelo tático dos reis. Mova peões, cavalos, bispos, torres, rainhas e o rei de acordo com suas regras oficiais de deslocamento em um tabuleiro de cores chumbo e azul noturno.',
+            controls: [
+                { key: 'Clique Esquerdo (Selecionar)', desc: 'Selecione uma peça da sua cor. As posições legais de movimento serão iluminadas.' },
+                { key: 'Clique Esquerdo (Mover)', desc: 'Pressione o bloco iluminado de destino para deslocar ou capturar a peça adversária.' }
+            ],
+            glowColor: 'rgba(226, 232, 240, 0.25)',
+            viewId: 'game-view-xadrez',
+            builder: () => new ChessGame()
+        },
+        // Active Retro Games
         memoria: {
             title: 'Sequência de Memória',
             icon: '🧠',
@@ -143,9 +161,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2. Setup ambient neon glow
         gameFrameGlow.style.background = `radial-gradient(circle, ${meta.glowColor}, transparent 70%)`;
 
-        // 3. IF CLASSIC: Bypass tutorial panel, load placeholder view immediately
-        const classicGames = ['uno', 'xadrez', 'damas', 'velha', 'paciencia'];
-        if (classicGames.includes(gameKey)) {
+        // 3. IF PLACEHOLDER: Bypass tutorial panel, load placeholder view immediately
+        const placeholderGames = ['uno', 'paciencia'];
+        if (placeholderGames.includes(gameKey)) {
             menuPrincipal.classList.add('hidden');
             telaJogo.classList.remove('hidden');
             tutorialGame.classList.add('hidden');
@@ -247,7 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 // ==========================================================================
-// GAME 0: CLASSIC GAME PLACEHOLDER ENGINE
+// GAME 0: CLASSIC GAME PLACEHOLDER ENGINE (UNO & PACIÊNCIA)
 // ==========================================================================
 class PlaceholderGame {
     constructor(name) {
@@ -261,9 +279,6 @@ class PlaceholderGame {
         // Custom emoji icons based on classic game selected
         const icons = {
             'Uno': '🃏',
-            'Xadrez': '👑',
-            'Damas': '🔴',
-            'Jogo da Velha': '❌',
             'Paciência': '🃏'
         };
         
@@ -277,7 +292,637 @@ class PlaceholderGame {
 
 
 // ==========================================================================
-// GAME 1: SEQUÊNCIA DE MEMÓRIA (SIMON ENGINE)
+// GAME 1: JOGO DA VELHA (TIC-TAC-TOE ENGINE)
+// ==========================================================================
+class TicTacToeGame {
+    constructor() {
+        this.board = Array(9).fill('');
+        this.currentPlayer = 'X';
+        this.isGameOver = false;
+
+        this.turnoText = document.getElementById('velha-turno');
+        this.statusText = document.getElementById('velha-status');
+        this.cells = document.querySelectorAll('.velha-cell');
+
+        this.boundCellClick = this.onCellClick.bind(this);
+    }
+
+    start() {
+        this.board = Array(9).fill('');
+        this.currentPlayer = 'X';
+        this.isGameOver = false;
+
+        this.turnoText.textContent = this.currentPlayer;
+        this.turnoText.className = 'active-player-text x';
+        this.statusText.textContent = 'Clique em uma casa vazia para jogar';
+        this.statusText.style.color = '#94a3b8';
+
+        this.cells.forEach(cell => {
+            cell.textContent = '';
+            cell.className = 'velha-cell';
+            cell.addEventListener('click', this.boundCellClick);
+        });
+    }
+
+    onCellClick(e) {
+        if (this.isGameOver) return;
+        const cell = e.target;
+        const index = parseInt(cell.getAttribute('data-index'));
+
+        // Cell already occupied
+        if (this.board[index] !== '') return;
+
+        // Apply symbol
+        this.board[index] = this.currentPlayer;
+        cell.textContent = this.currentPlayer;
+        cell.classList.add(this.currentPlayer.toLowerCase());
+
+        // Validate Victory
+        const winCombo = this.checkWin();
+        if (winCombo) {
+            this.isGameOver = true;
+            winCombo.forEach(i => this.cells[i].classList.add('win-highlight'));
+            this.statusText.textContent = `Vitória! O jogador ${this.currentPlayer} venceu!`;
+            this.statusText.style.color = '#38ef7d';
+            return;
+        }
+
+        // Validate Draw
+        if (this.board.every(cellValue => cellValue !== '')) {
+            this.isGameOver = true;
+            this.statusText.textContent = 'Velha! A partida terminou em empate.';
+            this.statusText.style.color = '#ff9500';
+            return;
+        }
+
+        // Switch turns
+        this.currentPlayer = this.currentPlayer === 'X' ? 'O' : 'X';
+        this.turnoText.textContent = this.currentPlayer;
+        this.turnoText.className = `active-player-text ${this.currentPlayer.toLowerCase()}`;
+    }
+
+    checkWin() {
+        const winningCombos = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+            [0, 4, 8], [2, 4, 6]             // diagonals
+        ];
+
+        for (const combo of winningCombos) {
+            if (this.board[combo[0]] !== '' &&
+                this.board[combo[0]] === this.board[combo[1]] &&
+                this.board[combo[0]] === this.board[combo[2]]) {
+                return combo;
+            }
+        }
+        return null;
+    }
+
+    cleanup() {
+        this.cells.forEach(cell => {
+            cell.removeEventListener('click', this.boundCellClick);
+        });
+    }
+}
+
+
+// ==========================================================================
+// GAME 2: DAMAS (CHECKERS ENGINE)
+// ==========================================================================
+class CheckersGame {
+    constructor() {
+        this.grid = document.getElementById('damas-grid');
+        this.turnoText = document.getElementById('damas-turno');
+        this.redCountText = document.getElementById('damas-red-captured');
+        this.blackCountText = document.getElementById('damas-black-captured');
+        this.statusText = document.getElementById('damas-status');
+
+        this.rows = 8;
+        this.cols = 8;
+        
+        this.board = [];
+        this.currentPlayer = 'red'; // red vs black
+        this.selectedPiece = null; // { r, c }
+        this.validMoves = []; // array of { r, c, capture: { r, c } }
+        this.isGameOver = false;
+
+        this.redCount = 12; // remaining
+        this.blackCount = 12; // remaining
+    }
+
+    start() {
+        this.cleanup();
+        this.board = Array.from({ length: this.rows }, () => Array(this.cols).fill(null));
+        this.currentPlayer = 'red';
+        this.selectedPiece = null;
+        this.validMoves = [];
+        this.isGameOver = false;
+        this.redCount = 12;
+        this.blackCount = 12;
+
+        this.turnoText.textContent = 'Vermelhas';
+        this.turnoText.className = 'active-player-text';
+        this.turnoText.style.color = '#ff4b2b';
+        this.statusText.textContent = 'Selecione uma de suas peças vermelhas para mover';
+        this.statusText.style.color = '#94a3b8';
+
+        this.redCountText.textContent = this.redCount;
+        this.blackCountText.textContent = this.blackCount;
+
+        this.setupBoard();
+        this.desenharTabuleiro();
+    }
+
+    setupBoard() {
+        // Place initial pieces on dark cells
+        for (let r = 0; r < this.rows; r++) {
+            for (let c = 0; c < this.cols; c++) {
+                if ((r + c) % 2 === 1) { // Dark squares
+                    if (r < 3) {
+                        this.board[r][c] = { type: 'black', king: false };
+                    } else if (r > 4) {
+                        this.board[r][c] = { type: 'red', king: false };
+                    }
+                }
+            }
+        }
+    }
+
+    desenharTabuleiro() {
+        this.grid.innerHTML = '';
+        for (let r = 0; r < this.rows; r++) {
+            for (let c = 0; c < this.cols; c++) {
+                const cellWrapper = document.createElement('div');
+                const isDark = (r + c) % 2 === 1;
+                cellWrapper.className = `square-inner ${isDark ? 'dark-square' : 'light-square'}`;
+
+                // Mark selection
+                if (this.selectedPiece && this.selectedPiece.r === r && this.selectedPiece.c === c) {
+                    cellWrapper.classList.add('selected-square');
+                }
+
+                // Check if this cell is a valid move destination
+                const moveOption = this.validMoves.find(m => m.r === r && m.c === c);
+                if (moveOption) {
+                    if (moveOption.capture) {
+                        cellWrapper.classList.add('valid-move-capture');
+                    } else {
+                        cellWrapper.classList.add('valid-move');
+                    }
+                    cellWrapper.addEventListener('click', () => this.executarMovimento(r, c));
+                }
+
+                // Draw pieces
+                const piece = this.board[r][c];
+                if (piece) {
+                    const chip = document.createElement('div');
+                    chip.className = `checker-piece piece-${piece.type}`;
+                    if (piece.king) {
+                        chip.classList.add('king');
+                    }
+
+                    // Add click listeners to current player's pieces
+                    if (!this.isGameOver && piece.type === this.currentPlayer) {
+                        chip.addEventListener('click', () => this.selecionarPeca(r, c));
+                    }
+                    cellWrapper.appendChild(chip);
+                } else if (isDark && !moveOption) {
+                    // Empty dark cell clicks deselect current choice
+                    cellWrapper.addEventListener('click', () => this.deselecionar());
+                }
+
+                this.grid.appendChild(cellWrapper);
+            }
+        }
+    }
+
+    selecionarPeca(r, c) {
+        if (this.isGameOver) return;
+        this.selectedPiece = { r, c };
+        this.validMoves = this.obterMovimentosValidos(r, c);
+        
+        if (this.validMoves.length === 0) {
+            this.statusText.textContent = 'Esta peça não possui movimentos válidos!';
+            this.statusText.style.color = '#ff4b2b';
+        } else {
+            this.statusText.textContent = 'Escolha uma casa iluminada para mover.';
+            this.statusText.style.color = '#38ef7d';
+        }
+
+        this.desenharTabuleiro();
+    }
+
+    deselecionar() {
+        this.selectedPiece = null;
+        this.validMoves = [];
+        this.statusText.textContent = this.currentPlayer === 'red' ? 
+            'Selecione uma de suas peças vermelhas para mover' : 
+            'Selecione uma de suas peças pretas para mover';
+        this.statusText.style.color = '#94a3b8';
+        this.desenharTabuleiro();
+    }
+
+    obterMovimentosValidos(r, c) {
+        const piece = this.board[r][c];
+        if (!piece || piece.type !== this.currentPlayer) return [];
+        
+        const moves = [];
+        const opponent = this.currentPlayer === 'red' ? 'black' : 'red';
+        
+        // Define direction steps
+        let directions = [];
+        if (piece.king) {
+            directions = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+        } else {
+            directions = this.currentPlayer === 'red' ? [[-1, -1], [-1, 1]] : [[1, -1], [1, 1]];
+        }
+
+        directions.forEach(([dr, dc]) => {
+            const nr = r + dr;
+            const nc = c + dc;
+            
+            if (this.dentroDoTabuleiro(nr, nc)) {
+                const target = this.board[nr][nc];
+                if (!target) {
+                    // Normal move to empty square
+                    moves.push({ r: nr, c: nc, capture: null });
+                } else if (target.type === opponent) {
+                    // Check capture jump
+                    const jr = nr + dr;
+                    const jc = nc + dc;
+                    if (this.dentroDoTabuleiro(jr, jc) && !this.board[jr][jc]) {
+                        moves.push({ r: jr, c: jc, capture: { r: nr, c: nc } });
+                    }
+                }
+            }
+        });
+
+        return moves;
+    }
+
+    executarMovimento(tr, tc) {
+        if (!this.selectedPiece) return;
+        const { r: sr, c: sc } = this.selectedPiece;
+        const moveOption = this.validMoves.find(m => m.r === tr && m.c === tc);
+        if (!moveOption) return;
+
+        const piece = this.board[sr][sc];
+
+        // Move piece
+        this.board[tr][tc] = piece;
+        this.board[sr][sc] = null;
+
+        // Apply capture if it occurred
+        if (moveOption.capture) {
+            const { r: cr, c: cc } = moveOption.capture;
+            const capturedPiece = this.board[cr][cc];
+            this.board[cr][cc] = null;
+
+            if (capturedPiece.type === 'red') {
+                this.redCount--;
+                this.redCountText.textContent = this.redCount;
+            } else {
+                this.blackCount--;
+                this.blackCountText.textContent = this.blackCount;
+            }
+        }
+
+        // King promotion upon reaching final row
+        if ((this.currentPlayer === 'red' && tr === 0) || (this.currentPlayer === 'black' && tr === 7)) {
+            piece.king = true;
+        }
+
+        // Validate Victory
+        if (this.redCount === 0) {
+            this.statusText.textContent = 'Vitória! As peças Pretas ganharam!';
+            this.statusText.style.color = '#38ef7d';
+            this.isGameOver = true;
+            this.deseletarFimDeJogo();
+            return;
+        }
+        if (this.blackCount === 0) {
+            this.statusText.textContent = 'Vitória! As peças Vermelhas ganharam!';
+            this.statusText.style.color = '#38ef7d';
+            this.isGameOver = true;
+            this.deseletarFimDeJogo();
+            return;
+        }
+
+        // Swap players turns
+        this.currentPlayer = this.currentPlayer === 'red' ? 'black' : 'red';
+        this.turnoText.textContent = this.currentPlayer === 'red' ? 'Vermelhas' : 'Pretas';
+        this.turnoText.style.color = this.currentPlayer === 'red' ? '#ff4b2b' : '#cbd5e1';
+
+        this.selectedPiece = null;
+        this.validMoves = [];
+        this.statusText.textContent = this.currentPlayer === 'red' ? 
+            'Selecione uma de suas peças vermelhas para mover' : 
+            'Selecione uma de suas peças pretas para mover';
+        this.statusText.style.color = '#94a3b8';
+
+        this.desenharTabuleiro();
+    }
+
+    deseletarFimDeJogo() {
+        this.selectedPiece = null;
+        this.validMoves = [];
+        this.desenharTabuleiro();
+    }
+
+    dentroDoTabuleiro(r, c) {
+        return r >= 0 && r < this.rows && c >= 0 && c < this.cols;
+    }
+
+    cleanup() {
+        this.grid.innerHTML = '';
+    }
+}
+
+
+// ==========================================================================
+// GAME 3: XADREZ (CHESS ENGINE)
+// ==========================================================================
+class ChessGame {
+    constructor() {
+        this.grid = document.getElementById('xadrez-grid');
+        this.turnoText = document.getElementById('xadrez-turno');
+        this.statusText = document.getElementById('xadrez-status');
+
+        this.rows = 8;
+        this.cols = 8;
+
+        this.board = [];
+        this.currentPlayer = 'w'; // w = White, b = Black
+        this.selectedSquare = null; // { r, c }
+        this.validMoves = []; // array of { r, c }
+        this.isGameOver = false;
+
+        this.unicodePieces = {
+            'w': { 'k': '♔', 'q': '♕', 'r': '♖', 'b': '♗', 'n': '♘', 'p': '♙' },
+            'b': { 'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟' }
+        };
+    }
+
+    start() {
+        this.cleanup();
+        this.board = Array.from({ length: this.rows }, () => Array(this.cols).fill(null));
+        this.currentPlayer = 'w';
+        this.selectedSquare = null;
+        this.validMoves = [];
+        this.isGameOver = false;
+
+        this.turnoText.textContent = 'Brancas';
+        this.turnoText.style.color = '#f8fafc';
+        this.statusText.textContent = 'Selecione uma de suas peças brancas para jogar';
+        this.statusText.style.color = '#94a3b8';
+
+        this.setupBoard();
+        this.desenharTabuleiro();
+    }
+
+    setupBoard() {
+        // Black pieces row 0
+        const backRow = ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'];
+        for (let c = 0; c < this.cols; c++) {
+            this.board[0][c] = { type: backRow[c], color: 'b' };
+            this.board[1][c] = { type: 'p', color: 'b' };
+            
+            // White pieces rows 6 and 7
+            this.board[6][c] = { type: 'p', color: 'w' };
+            this.board[7][c] = { type: backRow[c], color: 'w' };
+        }
+    }
+
+    desenharTabuleiro() {
+        this.grid.innerHTML = '';
+        for (let r = 0; r < this.rows; r++) {
+            for (let c = 0; c < this.cols; c++) {
+                const cellWrapper = document.createElement('div');
+                const isDark = (r + c) % 2 === 1;
+                cellWrapper.className = `square-inner ${isDark ? 'dark-square' : 'light-square'}`;
+
+                // Mark selection
+                if (this.selectedSquare && this.selectedSquare.r === r && this.selectedSquare.c === c) {
+                    cellWrapper.classList.add('selected-square');
+                }
+
+                // Check if valid destination
+                const isMoveValid = this.validMoves.some(m => m.r === r && m.c === c);
+                if (isMoveValid) {
+                    const hasEnemy = this.board[r][c] !== null;
+                    if (hasEnemy) {
+                        cellWrapper.classList.add('valid-move-capture');
+                    } else {
+                        cellWrapper.classList.add('valid-move');
+                    }
+                    cellWrapper.addEventListener('click', () => this.executarMovimento(r, c));
+                }
+
+                // Render piece symbols
+                const piece = this.board[r][c];
+                if (piece) {
+                    const glyph = document.createElement('div');
+                    glyph.className = `chess-piece chess-${piece.color === 'w' ? 'white' : 'black'}`;
+                    glyph.textContent = this.unicodePieces[piece.color][piece.type];
+
+                    // Select trigger
+                    if (!this.isGameOver && piece.color === this.currentPlayer) {
+                        glyph.addEventListener('click', (e) => {
+                            e.stopPropagation(); // Avoid cellWrapper click reset
+                            this.selecionarSquare(r, c);
+                        });
+                    }
+                    cellWrapper.appendChild(glyph);
+                } else if (!isMoveValid) {
+                    // Empty square deselects
+                    cellWrapper.addEventListener('click', () => this.deselecionar());
+                }
+
+                this.grid.appendChild(cellWrapper);
+            }
+        }
+    }
+
+    selecionarSquare(r, c) {
+        if (this.isGameOver) return;
+        this.selectedSquare = { r, c };
+        this.validMoves = this.obterMovimentosValidos(r, c);
+
+        if (this.validMoves.length === 0) {
+            this.statusText.textContent = 'Nenhum movimento válido para esta peça!';
+            this.statusText.style.color = '#ff4b2b';
+        } else {
+            this.statusText.textContent = 'Selecione uma casa iluminada para mover.';
+            this.statusText.style.color = '#38ef7d';
+        }
+
+        this.desenharTabuleiro();
+    }
+
+    deselecionar() {
+        this.selectedSquare = null;
+        this.validMoves = [];
+        this.statusText.textContent = this.currentPlayer === 'w' ? 
+            'Selecione uma de suas peças brancas para jogar' : 
+            'Selecione uma de suas peças pretas para jogar';
+        this.statusText.style.color = '#94a3b8';
+        this.desenharTabuleiro();
+    }
+
+    obterMovimentosValidos(r, c) {
+        const piece = this.board[r][c];
+        if (!piece || piece.color !== this.currentPlayer) return [];
+        
+        const moves = [];
+        const oppColor = this.currentPlayer === 'w' ? 'b' : 'w';
+
+        switch (piece.type) {
+            case 'p': { // Pawn rules
+                const dir = this.currentPlayer === 'w' ? -1 : 1;
+                const startRow = this.currentPlayer === 'w' ? 6 : 1;
+                
+                // Move 1 forward
+                if (this.dentroDoTabuleiro(r + dir, c) && !this.board[r + dir][c]) {
+                    moves.push({ r: r + dir, c });
+                    // Move 2 forward from starting line
+                    if (r === startRow && !this.board[r + 2 * dir][c]) {
+                        moves.push({ r: r + 2 * dir, c });
+                    }
+                }
+                // Diagonal captures
+                const diagCols = [c - 1, c + 1];
+                diagCols.forEach(nc => {
+                    if (this.dentroDoTabuleiro(r + dir, nc)) {
+                        const target = this.board[r + dir][nc];
+                        if (target && target.color === oppColor) {
+                            moves.push({ r: r + dir, c: nc });
+                        }
+                    }
+                });
+                break;
+            }
+            case 'r': { // Rook rules
+                this.adicionarMovimentosLongos(r, c, [[1,0], [-1,0], [0,1], [0,-1]], moves, oppColor);
+                break;
+            }
+            case 'b': { // Bishop rules
+                this.adicionarMovimentosLongos(r, c, [[1,1], [1,-1], [-1,1], [-1,-1]], moves, oppColor);
+                break;
+            }
+            case 'q': { // Queen rules
+                this.adicionarMovimentosLongos(r, c, [[1,0], [-1,0], [0,1], [0,-1], [1,1], [1,-1], [-1,1], [-1,-1]], moves, oppColor);
+                break;
+            }
+            case 'k': { // King rules
+                const offsets = [[1,0], [-1,0], [0,1], [0,-1], [1,1], [1,-1], [-1,1], [-1,-1]];
+                offsets.forEach(([dr, dc]) => {
+                    const nr = r + dr;
+                    const nc = c + dc;
+                    if (this.dentroDoTabuleiro(nr, nc)) {
+                        const target = this.board[nr][nc];
+                        if (!target || target.color === oppColor) {
+                            moves.push({ r: nr, c: nc });
+                        }
+                    }
+                });
+                break;
+            }
+            case 'n': { // Knight rules
+                const offsets = [[2,1], [2,-1], [-2,1], [-2,-1], [1,2], [1,-2], [-1,2], [-1,-2]];
+                offsets.forEach(([dr, dc]) => {
+                    const nr = r + dr;
+                    const nc = c + dc;
+                    if (this.dentroDoTabuleiro(nr, nc)) {
+                        const target = this.board[nr][nc];
+                        if (!target || target.color === oppColor) {
+                            moves.push({ r: nr, c: nc });
+                        }
+                    }
+                });
+                break;
+            }
+        }
+
+        return moves;
+    }
+
+    adicionarMovimentosLongos(r, c, directions, moves, oppColor) {
+        directions.forEach(([dr, dc]) => {
+            let nr = r + dr;
+            let nc = c + dc;
+            while (this.dentroDoTabuleiro(nr, nc)) {
+                const target = this.board[nr][nc];
+                if (!target) {
+                    moves.push({ r: nr, c: nc });
+                } else {
+                    if (target.color === oppColor) {
+                        moves.push({ r: nr, c: nc });
+                    }
+                    break; // blocked path
+                }
+                nr += dr;
+                nc += dc;
+            }
+        });
+    }
+
+    executarMovimento(tr, tc) {
+        if (!this.selectedSquare) return;
+        const { r: sr, c: sc } = this.selectedSquare;
+        const piece = this.board[sr][sc];
+        const targetPiece = this.board[tr][tc];
+
+        // Move piece
+        this.board[tr][tc] = piece;
+        this.board[sr][sc] = null;
+
+        // Special promotion rule for pawn reaching opposite end
+        if (piece.type === 'p' && (tr === 0 || tr === 7)) {
+            piece.type = 'q'; // Automate Queen promotion for simplicity
+        }
+
+        // Validate King Capture (simple Chess checkmate end condition)
+        if (targetPiece && targetPiece.type === 'k') {
+            this.statusText.textContent = `Xeque-mate! Jogador das ${this.currentPlayer === 'w' ? 'Brancas' : 'Pretas'} venceu!`;
+            this.statusText.style.color = '#38ef7d';
+            this.isGameOver = true;
+            this.deseletarFimDeJogo();
+            return;
+        }
+
+        // Swap turns
+        this.currentPlayer = this.currentPlayer === 'w' ? 'b' : 'w';
+        this.turnoText.textContent = this.currentPlayer === 'w' ? 'Brancas' : 'Pretas';
+        this.turnoText.style.color = this.currentPlayer === 'w' ? '#f8fafc' : '#38bdf8';
+
+        this.selectedSquare = null;
+        this.validMoves = [];
+        this.statusText.textContent = this.currentPlayer === 'w' ? 
+            'Selecione uma de suas peças brancas para jogar' : 
+            'Selecione uma de suas peças pretas para jogar';
+        this.statusText.style.color = '#94a3b8';
+
+        this.desenharTabuleiro();
+    }
+
+    deseletarFimDeJogo() {
+        this.selectedSquare = null;
+        this.validMoves = [];
+        this.desenharTabuleiro();
+    }
+
+    dentroDoTabuleiro(r, c) {
+        return r >= 0 && r < this.rows && c >= 0 && c < this.cols;
+    }
+
+    cleanup() {
+        this.grid.innerHTML = '';
+    }
+}
+
+
+// ==========================================================================
+// GAME 4: SEQUÊNCIA DE MEMÓRIA (SIMON ENGINE)
 // ==========================================================================
 class MemoryGame {
     constructor() {
@@ -499,7 +1144,7 @@ class MemoryGame {
 
 
 // ==========================================================================
-// GAME 2: COBRINHA (SNAKE ENGINE)
+// GAME 5: COBRINHA (SNAKE ENGINE)
 // ==========================================================================
 class SnakeGame {
     constructor() {
@@ -717,7 +1362,7 @@ class SnakeGame {
 
 
 // ==========================================================================
-// GAME 3: CAMPO MINADO (MINESWEEPER ENGINE)
+// GAME 6: CAMPO MINADO (MINESWEEPER ENGINE)
 // ==========================================================================
 class MinesweeperGame {
     constructor() {
@@ -940,7 +1585,7 @@ class MinesweeperGame {
 
 
 // ==========================================================================
-// GAME 4: TETRIS ENGINE
+// GAME 7: TETRIS ENGINE
 // ==========================================================================
 class TetrisGame {
     constructor() {
