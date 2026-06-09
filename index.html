@@ -416,11 +416,6 @@
                                 </div>
                             </div>
 
-                            <!-- Giant Restart Button Container -->
-                            <div id="velha-restart-container" class="hidden" style="display: flex; justify-content: center; align-items: center; min-height: 340px; width: 100%;">
-                                <button id="btn-velha-restart-giant" class="btn-velha-restart-giant">🔄 Jogar Novamente</button>
-                            </div>
-
                             <p id="velha-status" class="game-status-hint">Selecione uma casa para jogar</p>
                         </div>
                     </div>
@@ -543,6 +538,15 @@
                         <p class="game-status-hint">Setas ou WASD: Mover | Seta Cima ou W: Rotacionar | Seta Baixo ou S: Queda Rápida</p>
                     </div>
 
+                </div>
+
+                <!-- Global Game Over / Restart Overlay -->
+                <div id="global-restart-overlay" class="global-restart-overlay hidden">
+                    <div class="restart-box">
+                        <h2 id="global-restart-title">Fim de Jogo</h2>
+                        <p id="global-restart-subtitle">Pontuação: <span id="global-restart-score">0</span></p>
+                        <button id="btn-global-restart" class="btn-velha-restart-giant">🔄 Jogar Novamente</button>
+                    </div>
                 </div>
             </div>
         </section>

@@ -221,8 +221,13 @@ document.addEventListener('DOMContentLoaded', () => {
      * Resets the active game state immediately.
      */
     function reiniciarJogoAtivo() {
+        window.ocultarGlobalRestartOverlay();
         if (activeGameInstance) {
-            activeGameInstance.start();
+            if (typeof activeGameInstance.quickRestart === 'function') {
+                activeGameInstance.quickRestart();
+            } else {
+                activeGameInstance.start();
+            }
         }
     }
 
@@ -240,11 +245,44 @@ document.addEventListener('DOMContentLoaded', () => {
      * Invokes cleanup logic on active instances to clear intervals, listeners, and audio contexts.
      */
     function limparJogoAtivo() {
+        window.ocultarGlobalRestartOverlay();
         if (activeGameInstance) {
             activeGameInstance.cleanup();
             activeGameInstance = null;
         }
         activeGameKey = null;
+    }
+
+    // Global Game Over & Restart Overlay Elements
+    const globalRestartOverlay = document.getElementById('global-restart-overlay');
+    const globalRestartTitle = document.getElementById('global-restart-title');
+    const globalRestartSubtitle = document.getElementById('global-restart-subtitle');
+    const globalRestartScore = document.getElementById('global-restart-score');
+    const btnGlobalRestart = document.getElementById('btn-global-restart');
+
+    window.mostrarGlobalRestartOverlay = function(titulo, descOrScore = null) {
+        if (!globalRestartOverlay) return;
+        globalRestartTitle.textContent = titulo;
+        if (descOrScore !== null && descOrScore !== undefined) {
+            globalRestartSubtitle.style.display = 'block';
+            globalRestartScore.textContent = descOrScore;
+        } else {
+            globalRestartSubtitle.style.display = 'none';
+        }
+        globalRestartOverlay.classList.remove('hidden');
+    };
+
+    window.ocultarGlobalRestartOverlay = function() {
+        if (globalRestartOverlay) {
+            globalRestartOverlay.classList.add('hidden');
+        }
+    };
+
+    if (btnGlobalRestart) {
+        btnGlobalRestart.onclick = () => {
+            window.ocultarGlobalRestartOverlay();
+            reiniciarJogoAtivo();
+        };
     }
 });
 
@@ -697,7 +735,15 @@ class UnoGame {
     declararVencedor(name) {
         this.isGameOver = true;
         this.turnIndicator.textContent = `Fim de Jogo! ${name} venceu a partida de Uno!`;
-        exibirToast(`🏆 Fim de Jogo! ${name} ganhou a partida de Uno!`, "success");
+        const msg = name === 'Você' ? 'Você venceu a partida de Uno!' : `${name} venceu a partida de Uno!`;
+        exibirToast(`🏆 Fim de Jogo! ${msg}`, name === 'Você' ? "success" : "info");
+        setTimeout(() => {
+            window.mostrarGlobalRestartOverlay(name === 'Você' ? 'Vitória!' : 'Fim de Jogo', msg);
+        }, 1200);
+    }
+
+    quickRestart() {
+        this.start();
     }
 
     traduzirCor(col) {
@@ -1231,7 +1277,14 @@ class SolitaireGame {
             this.statusText.textContent = 'Parabéns! Você venceu a Paciência!';
             this.statusText.style.color = '#ffeb3b';
             exibirToast('🎉 Parabéns! Você venceu o jogo de Paciência!', 'success');
+            setTimeout(() => {
+                window.mostrarGlobalRestartOverlay('Vitória!', 'Parabéns, você completou a Paciência!');
+            }, 1200);
         }
+    }
+
+    quickRestart() {
+        this.start();
     }
 
     cleanup() {
@@ -1276,7 +1329,6 @@ class TicTacToeGame {
         this.difficultyModesDiv = document.getElementById('velha-difficulty-modes');
         this.boardContentDiv = document.getElementById('velha-board-content');
         this.gridContainer = document.getElementById('velha-grid-container');
-        this.restartContainer = document.getElementById('velha-restart-container');
 
         this.btnLocal = document.getElementById('btn-velha-local');
         this.btnBot = document.getElementById('btn-velha-bot');
@@ -1284,7 +1336,6 @@ class TicTacToeGame {
         this.btnMedium = document.getElementById('btn-velha-medium');
         this.btnHard = document.getElementById('btn-velha-hard');
         this.btnDiffBack = document.getElementById('btn-velha-diff-back');
-        this.btnRestartGiant = document.getElementById('btn-velha-restart-giant');
 
         this.turnoText = document.getElementById('velha-turno');
         this.statusText = document.getElementById('velha-status');
@@ -1305,7 +1356,6 @@ class TicTacToeGame {
         this.difficultyModesDiv.classList.add('hidden');
         this.boardContentDiv.classList.add('hidden');
         this.gridContainer.classList.remove('hidden');
-        this.restartContainer.classList.add('hidden');
 
         // Setup click mode handlers
         this.btnLocal.onclick = () => this.inicializarModo('local');
@@ -1315,8 +1365,6 @@ class TicTacToeGame {
         this.btnMedium.onclick = () => this.inicializarModoBot('medium');
         this.btnHard.onclick = () => this.inicializarModoBot('hard');
         this.btnDiffBack.onclick = () => this.voltarParaModos();
-
-        this.btnRestartGiant.onclick = () => this.reiniciarPartidaRapida();
     }
 
     mostrarDificuldades() {
@@ -1374,10 +1422,6 @@ class TicTacToeGame {
         this.currentPlayer = 'X';
         this.isGameOver = false;
 
-        // Hide restart button, show grid container
-        this.restartContainer.classList.add('hidden');
-        this.gridContainer.classList.remove('hidden');
-
         this.turnoText.textContent = this.currentPlayer;
         this.turnoText.className = 'active-player-text x';
         this.statusText.textContent = this.gameMode === 'bot' ? 
@@ -1419,12 +1463,11 @@ class TicTacToeGame {
             this.statusText.textContent = `Vitória! O jogador ${this.currentPlayer} venceu!`;
             this.statusText.style.color = '#38ef7d';
 
-            // Show Toast & display giant restart button after 1s
+            // Show Toast & display global restart button after 1s
             exibirToast(`🏆 Vitória! O jogador ${this.currentPlayer} venceu a partida!`, 'success');
             
             setTimeout(() => {
-                this.gridContainer.classList.add('hidden');
-                this.restartContainer.classList.remove('hidden');
+                window.mostrarGlobalRestartOverlay('Vitória!', `O jogador ${this.currentPlayer} venceu!`);
             }, 1000);
             return;
         }
@@ -1434,12 +1477,11 @@ class TicTacToeGame {
             this.statusText.textContent = 'Velha! A partida terminou em empate.';
             this.statusText.style.color = '#ff9500';
 
-            // Show Toast & display giant restart button after 1s
+            // Show Toast & display global restart button after 1s
             exibirToast('🤝 Empate! Deu Velha no Jogo da Velha.', 'info');
             
             setTimeout(() => {
-                this.gridContainer.classList.add('hidden');
-                this.restartContainer.classList.remove('hidden');
+                window.mostrarGlobalRestartOverlay('Deu Velha!', 'A partida terminou em empate.');
             }, 1000);
             return;
         }
@@ -1591,7 +1633,10 @@ class TicTacToeGame {
         this.btnMedium.onclick = null;
         this.btnHard.onclick = null;
         this.btnDiffBack.onclick = null;
-        this.btnRestartGiant.onclick = null;
+    }
+
+    quickRestart() {
+        this.reiniciarPartidaRapida();
     }
 }
 
@@ -1824,6 +1869,8 @@ class CheckersGame {
             this.statusText.style.color = '#38ef7d';
             this.isGameOver = true;
             this.deseletarFimDeJogo();
+            exibirToast('🏆 Vitória! As peças Pretas ganharam!', 'success');
+            setTimeout(() => window.mostrarGlobalRestartOverlay('Vitória das Pretas!', 'As peças Pretas capturaram todas as peças vermelhas.'), 1200);
             return;
         }
         if (this.blackCount === 0) {
@@ -1831,6 +1878,8 @@ class CheckersGame {
             this.statusText.style.color = '#38ef7d';
             this.isGameOver = true;
             this.deseletarFimDeJogo();
+            exibirToast('🏆 Vitória! As peças Vermelhas ganharam!', 'success');
+            setTimeout(() => window.mostrarGlobalRestartOverlay('Vitória das Vermelhas!', 'As peças Vermelhas capturaram todas as peças pretas.'), 1200);
             return;
         }
 
@@ -1884,6 +1933,8 @@ class CheckersGame {
             this.statusText.style.color = '#38ef7d';
             this.isGameOver = true;
             this.deseletarFimDeJogo();
+            exibirToast('🏆 Vitória! As peças Vermelhas ganharam por falta de movimentos!', 'success');
+            setTimeout(() => window.mostrarGlobalRestartOverlay('Vitória das Vermelhas!', 'As peças Pretas não possuem movimentos válidos.'), 1200);
             return;
         }
 
@@ -1915,6 +1966,23 @@ class CheckersGame {
         this.grid.innerHTML = '';
         this.btnLocal.onclick = null;
         this.btnBot.onclick = null;
+    }
+
+    quickRestart() {
+        const savedMode = this.gameMode;
+        this.cleanup();
+        this.board = Array.from({ length: this.rows }, () => Array(this.cols).fill(null));
+        this.currentPlayer = 'red';
+        this.selectedPiece = null;
+        this.validMoves = [];
+        this.isGameOver = false;
+        this.redCount = 12;
+        this.blackCount = 12;
+
+        this.redCountText.textContent = this.redCount;
+        this.blackCountText.textContent = this.blackCount;
+
+        this.inicializarModo(savedMode);
     }
 }
 
@@ -2178,10 +2246,13 @@ class ChessGame {
 
         // King capture
         if (targetPiece && targetPiece.type === 'k') {
-            this.statusText.textContent = `Xeque-mate! Jogador das ${this.currentPlayer === 'w' ? 'Brancas' : 'Pretas'} venceu!`;
+            const winnerName = this.currentPlayer === 'w' ? 'Brancas' : 'Pretas';
+            this.statusText.textContent = `Xeque-mate! Jogador das ${winnerName} venceu!`;
             this.statusText.style.color = '#38ef7d';
             this.isGameOver = true;
             this.deseletarFimDeJogo();
+            exibirToast(`🏆 Xeque-mate! As ${winnerName} venceram!`, 'success');
+            setTimeout(() => window.mostrarGlobalRestartOverlay(`Vitória das ${winnerName}!`, 'O Rei foi capturado.'), 1200);
             return;
         }
 
@@ -2235,6 +2306,8 @@ class ChessGame {
             this.statusText.style.color = '#38ef7d';
             this.isGameOver = true;
             this.deseletarFimDeJogo();
+            exibirToast('🏆 Xeque-mate! As Brancas venceram!', 'success');
+            setTimeout(() => window.mostrarGlobalRestartOverlay('Vitória das Brancas!', 'O Bot preto não possui movimentos válidos.'), 1200);
             return;
         }
 
@@ -2470,6 +2543,13 @@ class MemoryGame {
         this.registerTimeout(() => {
             this.pads.forEach(pad => pad.classList.remove('active'));
         }, 500);
+
+        exibirToast(`💥 Fim de Jogo! Sequência memorizada: ${this.score}`, 'error');
+        setTimeout(() => window.mostrarGlobalRestartOverlay('Fim de Jogo!', `Pontuação final: ${this.score}`), 1200);
+    }
+
+    quickRestart() {
+        this.start();
     }
 
     registerTimeout(fn, ms) {
@@ -2750,6 +2830,12 @@ class SnakeGame {
         this.isGameOver = true;
         this.draw();
         clearInterval(this.gameInterval);
+        exibirToast(`💥 Fim de Jogo! Pontuação final: ${this.score}`, 'error');
+        setTimeout(() => window.mostrarGlobalRestartOverlay('Fim de Jogo!', `Pontuação final: ${this.score}`), 1200);
+    }
+
+    quickRestart() {
+        this.start();
     }
 
     cleanup() {
@@ -2976,10 +3062,18 @@ class MinesweeperGame {
         if (isVictory) {
             this.statusText.textContent = 'VITÓRIA!';
             this.statusText.className = 'score-pill status-vitoria';
+            exibirToast('🏆 Vitória! Você desarmou todas as minas!', 'success');
+            setTimeout(() => window.mostrarGlobalRestartOverlay('Vitória!', 'Você limpou o campo minado!'), 1200);
         } else {
             this.statusText.textContent = 'EXPLODIU!';
             this.statusText.className = 'score-pill status-derrota';
+            exibirToast('💥 Boom! Você pisou em uma mina terrestre!', 'error');
+            setTimeout(() => window.mostrarGlobalRestartOverlay('Explodiu!', 'Você pisou em uma mina!'), 1200);
         }
+    }
+
+    quickRestart() {
+        this.start();
     }
 
     cleanup() {
@@ -3402,6 +3496,13 @@ class TetrisGame {
         this.ctx.font = '0.5px Outfit, sans-serif';
         this.ctx.fillStyle = '#94a3b8';
         this.ctx.fillText('Clique em Reiniciar', 5, 11);
+
+        exibirToast(`💥 Fim de Jogo! Pontos acumulados: ${this.score}`, 'error');
+        setTimeout(() => window.mostrarGlobalRestartOverlay('Fim de Jogo!', `Pontuação final: ${this.score}`), 1200);
+    }
+
+    quickRestart() {
+        this.start();
     }
 
     cleanup() {
