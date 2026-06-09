@@ -1823,3 +1823,73 @@ canvas {
     }
 }
 
+/* Jogo da Velha Difficulty Selectors & Giant Restart Button */
+.btn-diff-easy {
+    background: linear-gradient(90deg, #11998e, #38ef7d) !important;
+    color: #030406 !important;
+    box-shadow: 0 4px 15px rgba(56, 239, 125, 0.3) !important;
+    transition: all var(--transition-fast);
+}
+.btn-diff-easy:hover {
+    box-shadow: 0 6px 20px rgba(56, 239, 125, 0.5) !important;
+    transform: translateY(-2px);
+}
+
+.btn-diff-medium {
+    background: linear-gradient(90deg, #f2994a, #f2c94c) !important;
+    color: #030406 !important;
+    box-shadow: 0 4px 15px rgba(242, 153, 74, 0.3) !important;
+    transition: all var(--transition-fast);
+}
+.btn-diff-medium:hover {
+    box-shadow: 0 6px 20px rgba(242, 153, 74, 0.5) !important;
+    transform: translateY(-2px);
+}
+
+.btn-diff-hard {
+    background: linear-gradient(90deg, #ff416c, #ff4b2b) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 15px rgba(255, 75, 43, 0.3) !important;
+    transition: all var(--transition-fast);
+}
+.btn-diff-hard:hover {
+    box-shadow: 0 6px 20px rgba(255, 75, 43, 0.5) !important;
+    transform: translateY(-2px);
+}
+
+.btn-velha-restart-giant {
+    padding: 1.5rem 3rem;
+    font-size: 1.8rem;
+    font-weight: 800;
+    font-family: 'Outfit', sans-serif;
+    color: #ffffff;
+    background: linear-gradient(135deg, #00f2fe 0%, #4facfe 50%, #9b51e0 100%);
+    background-size: 200% auto;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    box-shadow: 0 8px 25px rgba(0, 242, 254, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: btnGlowPulse 2s infinite alternate ease-in-out;
+}
+
+.btn-velha-restart-giant:hover {
+    transform: scale(1.08) translateY(-4px);
+    background-position: right center;
+    box-shadow: 0 15px 35px rgba(0, 242, 254, 0.6), 0 0 25px rgba(155, 81, 224, 0.5);
+}
+
+.btn-velha-restart-giant:active {
+    transform: scale(0.98) translateY(1px);
+}
+
+@keyframes btnGlowPulse {
+    0% {
+        box-shadow: 0 6px 20px rgba(0, 242, 254, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    }
+    100% {
+        box-shadow: 0 12px 30px rgba(0, 242, 254, 0.5), 0 0 20px rgba(155, 81, 224, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+    }
+}
+
+

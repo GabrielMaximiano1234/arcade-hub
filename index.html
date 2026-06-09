@@ -384,17 +384,25 @@
                     <div id="game-view-velha" class="game-view hidden">
                         <!-- Mode Selector screen overlay -->
                         <div class="mode-select-overlay" id="velha-mode-select">
-                            <h3>Escolha o Modo de Jogo</h3>
-                            <div class="mode-select-buttons">
+                            <div class="mode-select-buttons" id="velha-main-modes">
+                                <h3>Escolha o Modo de Jogo</h3>
                                 <button class="btn-start btn-mode-local" id="btn-velha-local">👥 Contra Amigo (Local)</button>
                                 <button class="btn-start btn-mode-bot" id="btn-velha-bot">🤖 Contra Robô (Bot)</button>
+                            </div>
+                            <div class="mode-select-buttons hidden" id="velha-difficulty-modes">
+                                <h3>Escolha a Dificuldade</h3>
+                                <button class="btn-start btn-diff-easy" id="btn-velha-easy">🟢 Fácil</button>
+                                <button class="btn-start btn-diff-medium" id="btn-velha-medium">🟡 Médio</button>
+                                <button class="btn-start btn-diff-hard" id="btn-velha-hard">🔴 Difícil</button>
+                                <button class="btn-back" id="btn-velha-diff-back" style="margin-top: 0.5rem; width: 100%; justify-content: center; display: flex;">Voltar</button>
                             </div>
                         </div>
                         
                         <!-- Main game content (hidden until mode selected) -->
                         <div class="game-board-content hidden" id="velha-board-content">
                             <div class="game-score-display">Turno: <span id="velha-turno" class="active-player-text">X</span></div>
-                            <div class="velha-grid-container">
+                            
+                            <div class="velha-grid-container" id="velha-grid-container">
                                 <div id="velha-grid">
                                     <div class="velha-cell" data-index="0"></div>
                                     <div class="velha-cell" data-index="1"></div>
@@ -407,6 +415,12 @@
                                     <div class="velha-cell" data-index="8"></div>
                                 </div>
                             </div>
+
+                            <!-- Giant Restart Button Container -->
+                            <div id="velha-restart-container" class="hidden" style="display: flex; justify-content: center; align-items: center; min-height: 340px; width: 100%;">
+                                <button id="btn-velha-restart-giant" class="btn-velha-restart-giant">🔄 Jogar Novamente</button>
+                            </div>
+
                             <p id="velha-status" class="game-status-hint">Selecione uma casa para jogar</p>
                         </div>
                     </div>

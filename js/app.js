@@ -1269,11 +1269,22 @@ class TicTacToeGame {
         this.currentPlayer = 'X';
         this.isGameOver = false;
         this.gameMode = 'local'; // 'local' | 'bot'
+        this.botDifficulty = 'hard'; // 'easy' | 'medium' | 'hard'
 
         this.modeSelectDiv = document.getElementById('velha-mode-select');
+        this.mainModesDiv = document.getElementById('velha-main-modes');
+        this.difficultyModesDiv = document.getElementById('velha-difficulty-modes');
         this.boardContentDiv = document.getElementById('velha-board-content');
+        this.gridContainer = document.getElementById('velha-grid-container');
+        this.restartContainer = document.getElementById('velha-restart-container');
+
         this.btnLocal = document.getElementById('btn-velha-local');
         this.btnBot = document.getElementById('btn-velha-bot');
+        this.btnEasy = document.getElementById('btn-velha-easy');
+        this.btnMedium = document.getElementById('btn-velha-medium');
+        this.btnHard = document.getElementById('btn-velha-hard');
+        this.btnDiffBack = document.getElementById('btn-velha-diff-back');
+        this.btnRestartGiant = document.getElementById('btn-velha-restart-giant');
 
         this.turnoText = document.getElementById('velha-turno');
         this.statusText = document.getElementById('velha-status');
@@ -1288,13 +1299,34 @@ class TicTacToeGame {
         this.currentPlayer = 'X';
         this.isGameOver = false;
 
-        // Show mode select, hide board content
+        // Reset overlays and grid display
         this.modeSelectDiv.classList.remove('hidden');
+        this.mainModesDiv.classList.remove('hidden');
+        this.difficultyModesDiv.classList.add('hidden');
         this.boardContentDiv.classList.add('hidden');
+        this.gridContainer.classList.remove('hidden');
+        this.restartContainer.classList.add('hidden');
 
         // Setup click mode handlers
         this.btnLocal.onclick = () => this.inicializarModo('local');
-        this.btnBot.onclick = () => this.inicializarModo('bot');
+        this.btnBot.onclick = () => this.mostrarDificuldades();
+        
+        this.btnEasy.onclick = () => this.inicializarModoBot('easy');
+        this.btnMedium.onclick = () => this.inicializarModoBot('medium');
+        this.btnHard.onclick = () => this.inicializarModoBot('hard');
+        this.btnDiffBack.onclick = () => this.voltarParaModos();
+
+        this.btnRestartGiant.onclick = () => this.reiniciarPartidaRapida();
+    }
+
+    mostrarDificuldades() {
+        this.mainModesDiv.classList.add('hidden');
+        this.difficultyModesDiv.classList.remove('hidden');
+    }
+
+    voltarParaModos() {
+        this.difficultyModesDiv.classList.add('hidden');
+        this.mainModesDiv.classList.remove('hidden');
     }
 
     inicializarModo(mode) {
@@ -1304,8 +1336,52 @@ class TicTacToeGame {
 
         this.turnoText.textContent = this.currentPlayer;
         this.turnoText.className = 'active-player-text x';
+        this.statusText.textContent = 'Clique em uma casa vazia para jogar';
+        this.statusText.style.color = '#94a3b8';
+
+        this.cells.forEach(cell => {
+            cell.textContent = '';
+            cell.className = 'velha-cell';
+            cell.addEventListener('click', this.boundCellClick);
+        });
+    }
+
+    inicializarModoBot(difficulty) {
+        this.gameMode = 'bot';
+        this.botDifficulty = difficulty;
+        this.modeSelectDiv.classList.add('hidden');
+        this.boardContentDiv.classList.remove('hidden');
+
+        this.turnoText.textContent = this.currentPlayer;
+        this.turnoText.className = 'active-player-text x';
+        this.statusText.textContent = `Seu turno (X). Dificuldade: ${this.traduzirDificuldade(difficulty)}`;
+        this.statusText.style.color = '#94a3b8';
+
+        this.cells.forEach(cell => {
+            cell.textContent = '';
+            cell.className = 'velha-cell';
+            cell.addEventListener('click', this.boundCellClick);
+        });
+    }
+
+    traduzirDificuldade(diff) {
+        const trans = { 'easy': 'Fácil 🟢', 'medium': 'Médio 🟡', 'hard': 'Difícil 🔴' };
+        return trans[diff] || diff;
+    }
+
+    reiniciarPartidaRapida() {
+        this.board = Array(9).fill('');
+        this.currentPlayer = 'X';
+        this.isGameOver = false;
+
+        // Hide restart button, show grid container
+        this.restartContainer.classList.add('hidden');
+        this.gridContainer.classList.remove('hidden');
+
+        this.turnoText.textContent = this.currentPlayer;
+        this.turnoText.className = 'active-player-text x';
         this.statusText.textContent = this.gameMode === 'bot' ? 
-            'Seu turno (X). Clique em uma casa vazia.' : 
+            `Seu turno (X). Dificuldade: ${this.traduzirDificuldade(this.botDifficulty)}` : 
             'Clique em uma casa vazia para jogar';
         this.statusText.style.color = '#94a3b8';
 
@@ -1342,6 +1418,14 @@ class TicTacToeGame {
             winCombo.forEach(i => this.cells[i].classList.add('win-highlight'));
             this.statusText.textContent = `Vitória! O jogador ${this.currentPlayer} venceu!`;
             this.statusText.style.color = '#38ef7d';
+
+            // Show Toast & display giant restart button after 1s
+            exibirToast(`🏆 Vitória! O jogador ${this.currentPlayer} venceu a partida!`, 'success');
+            
+            setTimeout(() => {
+                this.gridContainer.classList.add('hidden');
+                this.restartContainer.classList.remove('hidden');
+            }, 1000);
             return;
         }
 
@@ -1349,6 +1433,14 @@ class TicTacToeGame {
             this.isGameOver = true;
             this.statusText.textContent = 'Velha! A partida terminou em empate.';
             this.statusText.style.color = '#ff9500';
+
+            // Show Toast & display giant restart button after 1s
+            exibirToast('🤝 Empate! Deu Velha no Jogo da Velha.', 'info');
+            
+            setTimeout(() => {
+                this.gridContainer.classList.add('hidden');
+                this.restartContainer.classList.remove('hidden');
+            }, 1000);
             return;
         }
 
@@ -1369,55 +1461,107 @@ class TicTacToeGame {
             }, 600);
         } else {
             this.statusText.textContent = this.gameMode === 'bot' ? 
-                'Seu turno (X). Escolha uma casa.' : 
+                `Seu turno (X). Dificuldade: ${this.traduzirDificuldade(this.botDifficulty)}` : 
                 `Turno do jogador ${this.currentPlayer}`;
             this.statusText.style.color = '#94a3b8';
         }
     }
 
     calcularJogadaBot() {
-        const board = this.board;
-        
-        // 1. Heuristic: Check if Bot 'O' can win this turn
-        for (let i = 0; i < 9; i++) {
-            if (board[i] === '') {
-                board[i] = 'O';
-                if (this.checkWin()) {
-                    board[i] = '';
-                    return i;
-                }
-                board[i] = '';
+        if (this.botDifficulty === 'easy') {
+            return this.obterJogadaAleatoria();
+        } else if (this.botDifficulty === 'medium') {
+            // 50% chance minimax, 50% chance random
+            if (Math.random() < 0.5) {
+                return this.obterJogadaAleatoria();
+            } else {
+                return this.obterMelhorJogadaMinimax();
             }
+        } else {
+            // 'hard' (100% Minimax)
+            return this.obterMelhorJogadaMinimax();
         }
+    }
 
-        // 2. Heuristic: Block Player 'X' from winning this turn
-        for (let i = 0; i < 9; i++) {
-            if (board[i] === '') {
-                board[i] = 'X';
-                if (this.checkWin()) {
-                    board[i] = '';
-                    return i;
-                }
-                board[i] = '';
-            }
-        }
-
-        // 3. Take center slot
-        if (board[4] === '') return 4;
-
-        // 4. Take corners
-        const corners = [0, 2, 6, 8];
-        const openCorners = corners.filter(i => board[i] === '');
-        if (openCorners.length > 0) {
-            return openCorners[Math.floor(Math.random() * openCorners.length)];
-        }
-
-        // 5. Random
+    obterJogadaAleatoria() {
         const empties = [];
         for (let i = 0; i < 9; i++) {
-            if (board[i] === '') empties.push(i);
+            if (this.board[i] === '') empties.push(i);
         }
+        if (empties.length === 0) return -1;
         return empties[Math.floor(Math.random() * empties.length)];
+    }
+
+    obterMelhorJogadaMinimax() {
+        let bestScore = -Infinity;
+        let move = -1;
+        
+        // Clone current board state
+        const tempBoard = [...this.board];
+        
+        for (let i = 0; i < 9; i++) {
+            if (tempBoard[i] === '') {
+                tempBoard[i] = 'O';
+                let score = this.minimax(tempBoard, 0, false);
+                tempBoard[i] = '';
+                if (score > bestScore) {
+                    bestScore = score;
+                    move = i;
+                }
+            }
+        }
+        return move;
+    }
+
+    minimax(board, depth, isMaximizing) {
+        const winCombo = this.checkWinState(board);
+        if (winCombo) {
+            const winner = board[winCombo[0]];
+            return winner === 'O' ? 10 - depth : depth - 10;
+        }
+        if (board.every(c => c !== '')) {
+            return 0;
+        }
+
+        if (isMaximizing) {
+            let bestScore = -Infinity;
+            for (let i = 0; i < 9; i++) {
+                if (board[i] === '') {
+                    board[i] = 'O';
+                    let score = this.minimax(board, depth + 1, false);
+                    board[i] = '';
+                    bestScore = Math.max(score, bestScore);
+                }
+            }
+            return bestScore;
+        } else {
+            let bestScore = Infinity;
+            for (let i = 0; i < 9; i++) {
+                if (board[i] === '') {
+                    board[i] = 'X';
+                    let score = this.minimax(board, depth + 1, true);
+                    board[i] = '';
+                    bestScore = Math.min(score, bestScore);
+                }
+            }
+            return bestScore;
+        }
+    }
+
+    checkWinState(board) {
+        const winningCombos = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+            [0, 4, 8], [2, 4, 6]             // diagonals
+        ];
+        for (const combo of winningCombos) {
+            if (board[combo[0]] !== '' &&
+                board[combo[0]] === board[combo[1]] &&
+                board[combo[0]] === board[combo[2]]) {
+                return combo;
+            }
+        }
+        return null;
     }
 
     checkWin() {
@@ -1443,6 +1587,11 @@ class TicTacToeGame {
         });
         this.btnLocal.onclick = null;
         this.btnBot.onclick = null;
+        this.btnEasy.onclick = null;
+        this.btnMedium.onclick = null;
+        this.btnHard.onclick = null;
+        this.btnDiffBack.onclick = null;
+        this.btnRestartGiant.onclick = null;
     }
 }
 
