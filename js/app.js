@@ -96,8 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
             icon: '🐍',
             description: 'Mova a cobrinha pela tela para comer as frutas vermelhas. Cada fruta faz com que a cauda cresça. Evite colidir com o próprio corpo ou com as bordas!',
             controls: [
-                { key: 'Setas direcionais (← ↑ → ↓)', desc: 'Direcionam os movimentos da cobrinha.' },
-                { key: 'Espaço / P', desc: 'Pausa ou reinicia a velocidade do jogo.' }
+                { key: 'Controles', desc: 'Use as setinhas ou WASD no computador, ou deslize o dedo na tela do celular.' }
             ],
             glowColor: 'rgba(56, 239, 125, 0.35)',
             viewId: 'game-view-cobrinha',
@@ -120,9 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
             icon: '🧱',
             description: 'Encaixe e ordene os blocos geométricos em queda para formar linhas horizontais contínuas. Completar linhas as elimina da tela e gera pontos.',
             controls: [
-                { key: 'Seta Esquerda / Direita', desc: 'Move a peça ativa lateralmente.' },
-                { key: 'Seta Cima (↑)', desc: 'Rotaciona a peça no sentido horário.' },
-                { key: 'Seta Baixo (↓)', desc: 'Soft drop (aumenta a velocidade de queda).' }
+                { key: 'Controles', desc: 'Use as setinhas ou WASD no computador, ou deslize o dedo na tela do celular.' }
             ],
             glowColor: 'rgba(155, 81, 224, 0.35)',
             viewId: 'game-view-tetris',
@@ -1162,8 +1159,14 @@ class SnakeGame {
         this.gameInterval = null;
         this.isGameOver = false;
 
+        // Touch Swipe Variables
+        this.touchstartX = 0;
+        this.touchstartY = 0;
+
         // Bind handler reference for cleanup
         this.boundKeyHandler = this.onKeyDown.bind(this);
+        this.boundTouchStart = this.onTouchStart.bind(this);
+        this.boundTouchEnd = this.onTouchEnd.bind(this);
     }
 
     start() {
@@ -1181,8 +1184,10 @@ class SnakeGame {
 
         this.spawnApple();
         
-        // Setup control listeners
+        // Setup Keyboard & Touch triggers
         window.addEventListener('keydown', this.boundKeyHandler);
+        this.canvas.addEventListener('touchstart', this.boundTouchStart, { passive: true });
+        this.canvas.addEventListener('touchend', this.boundTouchEnd, { passive: true });
 
         // Run game loop every 110ms
         this.gameInterval = setInterval(() => {
@@ -1315,33 +1320,77 @@ class SnakeGame {
     onKeyDown(e) {
         if (this.isGameOver) return;
 
-        // Prevent default arrow behavior to stop browser from scrolling page
-        const arrowKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '];
-        if (arrowKeys.includes(e.key)) {
+        // Prevent default arrow & WASD keys behavior to stop page scrolling
+        const preventKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'w', 'W', 's', 'S', 'a', 'A', 'd', 'D'];
+        if (preventKeys.includes(e.key)) {
             e.preventDefault();
         }
 
         switch (e.key) {
             case 'ArrowUp':
+            case 'w':
+            case 'W':
                 if (this.direction.y === 0) {
                     this.direction = { x: 0, y: -1 };
                 }
                 break;
             case 'ArrowDown':
+            case 's':
+            case 'S':
                 if (this.direction.y === 0) {
                     this.direction = { x: 0, y: 1 };
                 }
                 break;
             case 'ArrowLeft':
+            case 'a':
+            case 'A':
                 if (this.direction.x === 0) {
                     this.direction = { x: -1, y: 0 };
                 }
                 break;
             case 'ArrowRight':
+            case 'd':
+            case 'D':
                 if (this.direction.x === 0) {
                     this.direction = { x: 1, y: 0 };
                 }
                 break;
+        }
+    }
+
+    onTouchStart(e) {
+        this.touchstartX = e.changedTouches[0].screenX;
+        this.touchstartY = e.changedTouches[0].screenY;
+    }
+
+    onTouchEnd(e) {
+        if (this.isGameOver) return;
+
+        const touchendX = e.changedTouches[0].screenX;
+        const touchendY = e.changedTouches[0].screenY;
+
+        const diffX = touchendX - this.touchstartX;
+        const diffY = touchendY - this.touchstartY;
+        const threshold = 35; // minimum swipe distance
+
+        if (Math.abs(diffX) > Math.abs(diffY)) {
+            // Horizontal swipe
+            if (Math.abs(diffX) > threshold) {
+                if (diffX > 0 && this.direction.x === 0) { // Swipe Right
+                    this.direction = { x: 1, y: 0 };
+                } else if (diffX < 0 && this.direction.x === 0) { // Swipe Left
+                    this.direction = { x: -1, y: 0 };
+                }
+            }
+        } else {
+            // Vertical swipe
+            if (Math.abs(diffY) > threshold) {
+                if (diffY > 0 && this.direction.y === 0) { // Swipe Down
+                    this.direction = { x: 0, y: 1 };
+                } else if (diffY < 0 && this.direction.y === 0) { // Swipe Up
+                    this.direction = { x: 0, y: -1 };
+                }
+            }
         }
     }
 
@@ -1357,6 +1406,10 @@ class SnakeGame {
             this.gameInterval = null;
         }
         window.removeEventListener('keydown', this.boundKeyHandler);
+        if (this.canvas) {
+            this.canvas.removeEventListener('touchstart', this.boundTouchStart);
+            this.canvas.removeEventListener('touchend', this.boundTouchEnd);
+        }
     }
 }
 
@@ -1617,7 +1670,15 @@ class TetrisGame {
         this.lastTime = 0;
         
         this.rAF_id = null; // Animation frame tracker
+
+        // Touch Swipe Variables
+        this.touchstartX = 0;
+        this.touchstartY = 0;
+
+        // Bind handler reference for cleanup
         this.boundKeyHandler = this.onKeyDown.bind(this);
+        this.boundTouchStart = this.onTouchStart.bind(this);
+        this.boundTouchEnd = this.onTouchEnd.bind(this);
 
         // Piece Palette Configurations
         this.pieces = 'ILJSZOT';
@@ -1646,7 +1707,10 @@ class TetrisGame {
         this.nextPiece = this.criarPecaNova();
         this.spawnPeca();
 
+        // Setup Keyboard & Touch triggers
         window.addEventListener('keydown', this.boundKeyHandler);
+        this.canvas.addEventListener('touchstart', this.boundTouchStart, { passive: true });
+        this.canvas.addEventListener('touchend', this.boundTouchEnd, { passive: true });
 
         // Begin render loop
         this.lastTime = 0;
@@ -1903,25 +1967,70 @@ class TetrisGame {
 
     onKeyDown(e) {
         // Stop browser page scroll default actions
-        const preventKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+        const preventKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'W', 's', 'S', 'a', 'A', 'd', 'D'];
         if (preventKeys.includes(e.key)) {
             e.preventDefault();
         }
 
         switch (e.key) {
             case 'ArrowLeft':
+            case 'a':
+            case 'A':
                 this.mover(-1);
                 break;
             case 'ArrowRight':
+            case 'd':
+            case 'D':
                 this.mover(1);
                 break;
             case 'ArrowDown':
+            case 's':
+            case 'S':
                 this.drop();
                 break;
             case 'ArrowUp':
+            case 'w':
+            case 'W':
                 this.rotacionarPeca();
                 break;
         }
+    }
+
+    onTouchStart(e) {
+        this.touchstartX = e.changedTouches[0].screenX;
+        this.touchstartY = e.changedTouches[0].screenY;
+    }
+
+    onTouchEnd(e) {
+        if (!this.player.matrix) return;
+
+        const touchendX = e.changedTouches[0].screenX;
+        const touchendY = e.changedTouches[0].screenY;
+
+        const diffX = touchendX - this.touchstartX;
+        const diffY = touchendY - this.touchstartY;
+        const threshold = 35; // minimum swipe distance
+
+        if (Math.abs(diffX) > Math.abs(diffY)) {
+            // Horizontal swipe
+            if (Math.abs(diffX) > threshold) {
+                if (diffX > 0) { // Swipe Right -> Move piece Right
+                    this.mover(1);
+                } else if (diffX < 0) { // Swipe Left -> Move piece Left
+                    this.mover(-1);
+                }
+            }
+        } else {
+            // Vertical swipe
+            if (Math.abs(diffY) > threshold) {
+                if (diffY > 0) { // Swipe Down -> Drop piece
+                    this.drop();
+                } else if (diffY < 0) { // Swipe Up -> Rotate piece
+                    this.rotacionarPeca();
+                }
+            }
+        }
+        this.draw();
     }
 
     gameOver() {
@@ -1949,6 +2058,10 @@ class TetrisGame {
             this.rAF_id = null;
         }
         window.removeEventListener('keydown', this.boundKeyHandler);
+        if (this.canvas) {
+            this.canvas.removeEventListener('touchstart', this.boundTouchStart);
+            this.canvas.removeEventListener('touchend', this.boundTouchEnd);
+        }
         
         // Reset scale matrices values before constructor reinstantiates to prevent multipliers
         this.ctx.setTransform(1, 0, 0, 1, 0, 0);
