@@ -677,7 +677,7 @@ class UnoGame {
 
 
 // ==========================================================================
-// GAME 2: PACIÊNCIA / SOLITAIRE ENGINE (KLONDIKE CLICK-TO-MOVE)
+// GAME 2: PACIÊNCIA / SOLITAIRE ENGINE (KLONDIKE CLICK-TO-MOVE & DRAG-AND-DROP)
 // ==========================================================================
 class SolitaireGame {
     constructor() {
@@ -685,9 +685,10 @@ class SolitaireGame {
         this.waste = [];
         this.foundations = [[], [], [], []]; // 4 piles
         this.tableau = [[], [], [], [], [], [], []]; // 7 piles
+        this.drawCount = 1; // 1 or 3
 
         // Selection memory state
-        this.selectedCard = null; // { pileType: 'tableau'|'waste', colIndex: 0-6, cardIndex: X }
+        this.selectedCard = null; // { pileType: 'tableau'|'waste'|'found', colIndex: 0-6, cardIndex: X }
 
         // DOM elements references
         this.stockSlot = document.getElementById('sol-stock');
@@ -720,9 +721,31 @@ class SolitaireGame {
         this.foundations = [[], [], [], []];
         this.tableau = [[], [], [], [], [], [], []];
         this.selectedCard = null;
+        this.drawCount = 1;
 
-        this.statusText.textContent = 'Clique em uma carta para selecionar, depois no destino';
+        this.statusText.textContent = 'Arraste e solte as cartas ou clique na origem e no destino';
         this.statusText.style.color = '#94a3b8';
+
+        // Bind options buttons
+        const btn1 = document.getElementById('btn-sol-draw-1');
+        const btn3 = document.getElementById('btn-sol-draw-3');
+        if (btn1 && btn3) {
+            btn1.classList.add('active');
+            btn3.classList.remove('active');
+            
+            btn1.onclick = () => {
+                this.drawCount = 1;
+                btn1.classList.add('active');
+                btn3.classList.remove('active');
+                this.desenharTabuleiro();
+            };
+            btn3.onclick = () => {
+                this.drawCount = 3;
+                btn3.classList.add('active');
+                btn1.classList.remove('active');
+                this.desenharTabuleiro();
+            };
+        }
 
         // 1. Generate Standard deck of cards (52 cards)
         const suits = ['Copas', 'Ouro', 'Espadas', 'Paus'];
@@ -781,10 +804,13 @@ class SolitaireGame {
             });
             this.waste = [];
         } else {
-            // Draw card
-            const card = this.deck.pop();
-            card.faceUp = true;
-            this.waste.push(card);
+            // Draw up to drawCount cards
+            const count = Math.min(this.drawCount, this.deck.length);
+            for (let k = 0; k < count; k++) {
+                const card = this.deck.pop();
+                card.faceUp = true;
+                this.waste.push(card);
+            }
         }
         this.desenharTabuleiro();
     }
@@ -797,22 +823,51 @@ class SolitaireGame {
             this.stockSlot.innerHTML = `♻️`; // Recycle symbol
         }
 
-        // 2. Render waste card
+        // 2. Render waste card(s)
+        this.wasteSlot.innerHTML = '';
         if (this.waste.length > 0) {
-            const topWaste = this.waste[this.waste.length - 1];
-            this.wasteSlot.innerHTML = '';
-            const cardEl = this.criarCardElement(topWaste);
-            
-            // Check if selected
-            if (this.selectedCard && this.selectedCard.pileType === 'waste') {
-                cardEl.classList.add('selected-sol-card');
-            }
+            const showCount = this.drawCount === 3 ? Math.min(3, this.waste.length) : 1;
+            const startIndex = this.waste.length - showCount;
+            for (let idx = startIndex; idx < this.waste.length; idx++) {
+                const card = this.waste[idx];
+                const cardEl = this.criarCardElement(card);
+                
+                // Stack offset for waste pile
+                const offsetIdx = idx - startIndex;
+                cardEl.style.position = 'absolute';
+                cardEl.style.left = `${offsetIdx * 12}px`;
+                cardEl.style.top = '0px';
+                cardEl.style.zIndex = idx;
 
-            cardEl.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.selecionarOrigem('waste', null, this.waste.length - 1);
-            });
-            this.wasteSlot.appendChild(cardEl);
+                const isTop = idx === this.waste.length - 1;
+                if (isTop) {
+                    // Make only the top card interactive
+                    if (this.selectedCard && this.selectedCard.pileType === 'waste') {
+                        cardEl.classList.add('selected-sol-card');
+                    }
+                    cardEl.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.selecionarOrigem('waste', null, this.waste.length - 1);
+                    });
+                    
+                    // Setup Drag & Drop
+                    cardEl.setAttribute('draggable', 'true');
+                    cardEl.addEventListener('dragstart', (e) => {
+                        this.selectedCard = { pileType: 'waste', colIndex: null, cardIndex: this.waste.length - 1 };
+                        e.dataTransfer.setData('text/plain', 'waste');
+                        cardEl.classList.add('selected-sol-card');
+                    });
+                    cardEl.addEventListener('dragend', () => {
+                        cardEl.classList.remove('selected-sol-card');
+                    });
+
+                    cardEl.style.cursor = 'grab';
+                } else {
+                    cardEl.style.cursor = 'default';
+                    cardEl.style.pointerEvents = 'none'; // Background cards in waste are not interactive
+                }
+                this.wasteSlot.appendChild(cardEl);
+            }
             this.wasteSlot.style.cursor = 'pointer';
         } else {
             this.wasteSlot.innerHTML = '';
@@ -836,11 +891,32 @@ class SolitaireGame {
                     e.stopPropagation();
                     this.selecionarOrigem('found', i, pile.length - 1);
                 });
+
+                // Make top foundation card draggable
+                cardEl.setAttribute('draggable', 'true');
+                cardEl.addEventListener('dragstart', (e) => {
+                    this.selectedCard = { pileType: 'found', colIndex: i, cardIndex: pile.length - 1 };
+                    e.dataTransfer.setData('text/plain', `found-${i}`);
+                    cardEl.classList.add('selected-sol-card');
+                });
+                cardEl.addEventListener('dragend', () => {
+                    cardEl.classList.remove('selected-sol-card');
+                });
+
                 slot.appendChild(cardEl);
             }
 
             // Click foundation acts as destination
             slot.addEventListener('click', () => this.moverParaDestino('found', i));
+
+            // Drag and Drop target on foundation
+            slot.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+            slot.addEventListener('drop', (e) => {
+                e.preventDefault();
+                this.moverParaDestino('found', i);
+            });
         }
 
         // 4. Render 7 Tableau columns
@@ -853,6 +929,15 @@ class SolitaireGame {
             
             // Allow empty columns to receive Kings
             colSlot.addEventListener('click', () => this.moverParaDestino('tableau', i));
+
+            // Drag and Drop target on column slot
+            colSlot.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+            colSlot.addEventListener('drop', (e) => {
+                e.preventDefault();
+                this.moverParaDestino('tableau', i);
+            });
 
             pile.forEach((card, index) => {
                 let cardEl;
@@ -870,6 +955,25 @@ class SolitaireGame {
                         }
                     });
 
+                    // Setup drag-and-drop on faceUp cards
+                    cardEl.setAttribute('draggable', 'true');
+                    cardEl.addEventListener('dragstart', (e) => {
+                        this.selectedCard = { pileType: 'tableau', colIndex: i, cardIndex: index };
+                        e.dataTransfer.setData('text/plain', `tableau-${i}-${index}`);
+                        
+                        // Add selection styling to all card elements being dragged
+                        for (let k = index; k < pile.length; k++) {
+                            const childEl = colSlot.children[k];
+                            if (childEl) childEl.classList.add('selected-sol-card');
+                        }
+                    });
+                    cardEl.addEventListener('dragend', () => {
+                        for (let k = index; k < pile.length; k++) {
+                            const childEl = colSlot.children[k];
+                            if (childEl) childEl.classList.remove('selected-sol-card');
+                        }
+                    });
+
                     // Check if card is selected
                     if (this.selectedCard && 
                         this.selectedCard.pileType === 'tableau' && 
@@ -877,11 +981,13 @@ class SolitaireGame {
                         this.selectedCard.cardIndex === index) {
                         cardEl.classList.add('selected-sol-card');
                     }
+                    cardEl.style.cursor = 'grab';
                 } else {
                     cardEl = document.createElement('div');
                     cardEl.className = 'solitaire-card-back';
                     cardEl.textContent = '♠';
                     cardEl.style.fontSize = '1.3rem';
+                    cardEl.style.cursor = 'default';
                 }
 
                 // Stacking offset effect
@@ -907,7 +1013,7 @@ class SolitaireGame {
         if (pileType === 'tableau' && !this.tableau[colIndex][cardIndex].faceUp) return;
 
         this.selectedCard = { pileType, colIndex, cardIndex };
-        this.statusText.textContent = 'Carta selecionada! Clique no destino.';
+        this.statusText.textContent = 'Carta selecionada! Clique ou solte no destino.';
         this.statusText.style.color = '#38ef7d';
 
         this.desenharTabuleiro();
@@ -1002,6 +1108,15 @@ class SolitaireGame {
     cleanup() {
         this.stockSlot.replaceWith(this.stockSlot.cloneNode(true));
         this.stockSlot = document.getElementById('sol-stock');
+        
+        this.foundSlots.forEach(s => s.replaceWith(s.cloneNode(true)));
+        this.foundSlots = [
+            document.getElementById('sol-found-0'),
+            document.getElementById('sol-found-1'),
+            document.getElementById('sol-found-2'),
+            document.getElementById('sol-found-3')
+        ];
+        
         this.tableauSlots.forEach(s => s.replaceWith(s.cloneNode(true)));
         this.tableauSlots = [
             document.getElementById('sol-col-0'),

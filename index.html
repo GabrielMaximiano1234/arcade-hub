@@ -340,6 +340,11 @@
                          1. VIEW: Paciência (Solitaire)
                          ========================================== -->
                     <div id="game-view-paciencia" class="game-view hidden">
+                        <div class="solitaire-options">
+                            <span class="options-label">Comprar:</span>
+                            <button class="btn-option active" id="btn-sol-draw-1">1 Carta</button>
+                            <button class="btn-option" id="btn-sol-draw-3">3 Cartas</button>
+                        </div>
                         <div class="solitaire-layout">
                             <!-- Upper Deck Row: Stock, Waste, and Foundations -->
                             <div class="solitaire-top-bar">
@@ -369,7 +374,7 @@
                                 <div class="solitaire-column-slot" data-col="6" id="sol-col-6"></div>
                             </div>
                         </div>
-                        <p id="solitaire-status" class="game-status-hint">Clique em uma carta para selecionar, depois clique no local de destino</p>
+                        <p id="solitaire-status" class="game-status-hint">Arraste e solte as cartas ou clique na origem e no destino</p>
                     </div>
 
                     <!-- ==========================================

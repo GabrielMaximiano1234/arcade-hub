@@ -988,6 +988,57 @@ body {
 /* ==========================================================================
    PACIÊNCIA / SOLITAIRE GAME STYLING
    ========================================================================== */
+.solitaire-options {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.8rem;
+    margin-top: -0.5rem;
+    margin-bottom: 0.8rem;
+}
+
+.options-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-option {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 0.35rem 0.9rem;
+    border-radius: 99px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-option:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--border-hover);
+    color: var(--text-primary);
+}
+
+.btn-option.active {
+    background: linear-gradient(90deg, #38ef7d, #11998e);
+    color: #030406;
+    border-color: transparent;
+    box-shadow: 0 0 12px rgba(56, 239, 125, 0.3);
+}
+
+#sol-waste {
+    position: relative;
+    width: 79px;
+    height: 80px;
+    border: none !important;
+    background: transparent !important;
+}
+
 .solitaire-layout {
     display: flex;
     flex-direction: column;
