@@ -29,20 +29,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Game Configurations (Metadata, Controls, Tutorial Contents)
     const gamesMetadata = {
-        // Placeholder Games (Coming Soon)
         uno: {
             title: 'Uno',
+            icon: '🃏',
+            description: 'A clássica batalha de Uno. Descarte suas cartas por cor ou número, jogue cartas de ação (+2, pular, inverter, coringa +4) e encare 3 Bots inteligentes no combate local.',
+            controls: [
+                { key: 'Clique Esquerdo (Descartar)', desc: 'Pressione a carta de sua mão para jogá-la, caso seja compatível com a mesa.' },
+                { key: 'Pilha de Compra (Clique)', desc: 'Adiciona uma carta do deck à sua mão se você não tiver jogadas válidas.' },
+                { key: 'Gritar UNO!', desc: 'Pressione o botão vermelho para sinalizar que você tem apenas 1 carta restante e evitar penalidades.' }
+            ],
             glowColor: 'rgba(255, 59, 48, 0.45)',
-            viewId: 'game-view-placeholder',
-            builder: () => new PlaceholderGame('Uno')
+            viewId: 'game-view-uno',
+            builder: () => new UnoGame()
         },
         paciencia: {
             title: 'Paciência',
+            icon: '🃏',
+            description: 'O tradicional paciência Klondike. Organize o baralho inteiro nas 4 pilhas de fundação em ordem de Ás a Rei por naipe, alternando cores no tabuleiro.',
+            controls: [
+                { key: 'Clique Esquerdo (Selecionar)', desc: 'Selecione uma carta virada para cima no tabuleiro ou o monte de descarte.' },
+                { key: 'Clique Esquerdo (Mover)', desc: 'Clique no destino (outra coluna ou fundação) para realizar o movimento.' },
+                { key: 'Monte de Compra (Clique)', desc: 'Revela a próxima carta do baralho para descarte.' }
+            ],
             glowColor: 'rgba(52, 199, 89, 0.4)',
-            viewId: 'game-view-placeholder',
-            builder: () => new PlaceholderGame('Paciência')
+            viewId: 'game-view-paciencia',
+            builder: () => new SolitaireGame()
         },
-        // Playable Board Games
         velha: {
             title: 'Jogo da Velha',
             icon: '❌',
@@ -78,7 +90,6 @@ document.addEventListener('DOMContentLoaded', () => {
             viewId: 'game-view-xadrez',
             builder: () => new ChessGame()
         },
-        // Active Retro Games
         memoria: {
             title: 'Sequência de Memória',
             icon: '🧠',
@@ -158,30 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2. Setup ambient neon glow
         gameFrameGlow.style.background = `radial-gradient(circle, ${meta.glowColor}, transparent 70%)`;
 
-        // 3. IF PLACEHOLDER: Bypass tutorial panel, load placeholder view immediately
-        const placeholderGames = ['uno', 'paciencia'];
-        if (placeholderGames.includes(gameKey)) {
-            menuPrincipal.classList.add('hidden');
-            telaJogo.classList.remove('hidden');
-            tutorialGame.classList.add('hidden');
-            arenaJogo.classList.remove('hidden');
-            btnReiniciar.classList.add('hidden'); // Hide reset button for placeholders
-
-            gameViews.forEach(view => {
-                if (view.id === meta.viewId) {
-                    view.classList.remove('hidden');
-                } else {
-                    view.classList.add('hidden');
-                }
-            });
-
-            activeGameInstance = meta.builder();
-            activeGameInstance.start();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            return;
-        }
-
-        // 4. IF PLAYABLE: Load tutorial modal
+        // 3. IF PLAYABLE: Load tutorial modal
         btnReiniciar.classList.remove('hidden');
         tutorialTitle.textContent = meta.title;
         tutorialIcon.textContent = meta.icon;
@@ -262,40 +250,786 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 // ==========================================================================
-// GAME 0: CLASSIC GAME PLACEHOLDER ENGINE (UNO & PACIÊNCIA)
+// GAME 1: UNO ENGINE (LOCAL PLAYER VS 3 BOTS)
 // ==========================================================================
-class PlaceholderGame {
-    constructor(name) {
-        this.name = name;
+class UnoGame {
+    constructor() {
+        this.deck = [];
+        this.discardPile = [];
+        this.players = []; // 0 = Player, 1 = Bot1, 2 = Bot2, 3 = Bot3
+        this.currentPlayerIdx = 0;
+        this.direction = 1; // 1 = Clockwise, -1 = Counter-clockwise
+        this.currentColor = '';
+        this.unoShouted = false;
+        this.isGameOver = false;
+
+        this.colors = ['Red', 'Blue', 'Green', 'Yellow'];
+        this.values = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'Skip', 'Reverse', 'DrawTwo'];
+
+        // DOM elements
+        this.discardCardDiv = document.getElementById('uno-discard-card');
+        this.discardNumberSpan = this.discardCardDiv.querySelector('.uno-card-number');
+        this.drawPileDiv = document.getElementById('uno-draw-pile');
+        this.currentColorText = document.getElementById('uno-current-color-text');
+        
+        this.botCardsText = [
+            document.getElementById('uno-bot1-cards'),
+            document.getElementById('uno-bot2-cards'),
+            document.getElementById('uno-bot3-cards')
+        ];
+        
+        this.playerHandDiv = document.getElementById('uno-player-hand');
+        this.shoutBtn = document.getElementById('uno-shout-btn');
+        this.turnIndicator = document.getElementById('uno-turn-indicator');
+        this.colorPickerDiv = document.getElementById('uno-color-picker');
+
+        this.timeouts = [];
     }
+
     start() {
-        // Set dynamic text for placeholder
-        const iconPulse = document.querySelector('.placeholder-icon-pulse');
-        const descText = document.querySelector('.placeholder-desc');
-        
-        // Custom emoji icons based on classic game selected
-        const icons = {
-            'Uno': '🃏',
-            'Paciência': '🃏'
-        };
-        
-        if (iconPulse) iconPulse.textContent = icons[this.name] || '🔧';
-        if (descText) descText.textContent = `${this.name} - Em Breve`;
+        this.cleanup();
+        this.isGameOver = false;
+        this.direction = 1;
+        this.currentPlayerIdx = 0;
+        this.unoShouted = false;
+
+        this.deck = [];
+        this.discardPile = [];
+        this.players = [[], [], [], []]; // Clear hands
+
+        this.shoutBtn.classList.remove('hidden');
+        this.shoutBtn.addEventListener('click', () => this.gritarUno());
+
+        // 1. Generate Uno Deck (108 cards)
+        this.colors.forEach(color => {
+            // Numbers 0
+            this.deck.push({ color, value: '0' });
+            // Numbers 1-9 & Action cards (2 of each per color)
+            for (let i = 0; i < 2; i++) {
+                this.values.slice(1).forEach(val => {
+                    this.deck.push({ color, value: val });
+                });
+            }
+        });
+        // Wild cards (4 Wild, 4 WildDrawFour)
+        for (let i = 0; i < 4; i++) {
+            this.deck.push({ color: 'Wild', value: 'Wild' });
+            this.deck.push({ color: 'Wild', value: 'WildDrawFour' });
+        }
+
+        this.shuffleDeck();
+
+        // 2. Deal 7 cards to everyone
+        for (let i = 0; i < 7; i++) {
+            for (let p = 0; p < 4; p++) {
+                this.players[p].push(this.deck.pop());
+            }
+        }
+
+        // 3. Setup first discard card
+        let firstCard = this.deck.pop();
+        while (firstCard.color === 'Wild') {
+            this.deck.unshift(firstCard);
+            this.shuffleDeck();
+            firstCard = this.deck.pop();
+        }
+        this.discardPile.push(firstCard);
+        this.currentColor = firstCard.color;
+
+        // 4. Update visuals
+        this.drawPileDiv.addEventListener('click', () => this.compreCardJogador());
+        this.atualizarInterface();
+
+        this.definirTurno();
     }
+
+    shuffleDeck() {
+        for (let i = this.deck.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [this.deck[i], this.deck[j]] = [this.deck[j], this.deck[i]];
+        }
+    }
+
+    gritarUno() {
+        if (this.isGameOver) return;
+        this.unoShouted = true;
+        alert('Você gritou UNO!');
+    }
+
+    compreCardJogador() {
+        if (this.isGameOver || this.currentPlayerIdx !== 0) return;
+        
+        // Draw card
+        const card = this.comprarCard();
+        this.players[0].push(card);
+        
+        // Check if drawn card is playable
+        if (this.ehJogavel(card)) {
+            // Give them a moment to play it
+            this.atualizarInterface();
+            this.turnIndicator.textContent = 'Você comprou e pode jogar esta carta!';
+        } else {
+            // Auto pass
+            this.turnIndicator.textContent = 'Nenhuma carta jogável. Passando turno...';
+            this.registerTimeout(() => {
+                this.passarTurno();
+            }, 1000);
+        }
+    }
+
+    comprarCard() {
+        if (this.deck.length === 0) {
+            // Recycle discard pile
+            const topCard = this.discardPile.pop();
+            this.deck = [...this.discardPile];
+            this.discardPile = [topCard];
+            this.shuffleDeck();
+        }
+        return this.deck.pop();
+    }
+
+    ehJogavel(card) {
+        const topCard = this.discardPile[this.discardPile.length - 1];
+        if (card.color === 'Wild' || card.color === this.currentColor || card.value === topCard.value) {
+            return true;
+        }
+        return false;
+    }
+
+    atualizarInterface() {
+        if (this.isGameOver) return;
+
+        // 1. Render discard card
+        const topCard = this.discardPile[this.discardPile.length - 1];
+        this.discardCardDiv.className = `uno-card card-${topCard.color.toLowerCase()}`;
+        
+        // Format action labels or numbers
+        const actionLabels = { 'Skip': '🚫', 'Reverse': '🔁', 'DrawTwo': '+2', 'Wild': '🎨', 'WildDrawFour': '+4' };
+        const label = actionLabels[topCard.value] || topCard.value;
+        this.discardNumberSpan.textContent = label;
+        this.discardNumberSpan.className = isNaN(label) && label !== '🎨' && label !== '+2' && label !== '+4' ? 'uno-card-action' : 'uno-card-number';
+
+        this.currentColorText.textContent = this.traduzirCor(this.currentColor);
+        this.currentColorText.style.color = this.obterCorCss(this.currentColor);
+
+        // 2. Render Bot counts
+        for (let i = 0; i < 3; i++) {
+            this.botCardsText[i].textContent = this.players[i + 1].length;
+        }
+
+        // 3. Render Player hand
+        this.playerHandDiv.innerHTML = '';
+        this.players[0].forEach((card, index) => {
+            const cardEl = document.createElement('div');
+            cardEl.className = `uno-card card-${card.color.toLowerCase()}`;
+            
+            const numSpan = document.createElement('span');
+            const cardVal = actionLabels[card.value] || card.value;
+            numSpan.textContent = cardVal;
+            numSpan.className = isNaN(cardVal) && cardVal !== '🎨' && cardVal !== '+2' && cardVal !== '+4' ? 'uno-card-action' : 'uno-card-number';
+            
+            cardEl.appendChild(numSpan);
+
+            // Add click listener if player's turn
+            if (this.currentPlayerIdx === 0) {
+                cardEl.addEventListener('click', () => this.jogarCartaJogador(index));
+            }
+            this.playerHandDiv.appendChild(cardEl);
+        });
+    }
+
+    jogarCartaJogador(index) {
+        if (this.isGameOver || this.currentPlayerIdx !== 0) return;
+        const card = this.players[0][index];
+
+        if (!this.ehJogavel(card)) {
+            alert('Esta carta não pode ser jogada!');
+            return;
+        }
+
+        // Play card
+        this.players[0].splice(index, 1);
+        this.discardPile.push(card);
+        this.currentColor = card.color;
+
+        // Enforce Uno Penalty if cards === 1 and not shouted
+        if (this.players[0].length === 1 && !this.unoShouted) {
+            alert('Você esqueceu de gritar UNO! Penalidade: Compre 2 cartas.');
+            this.players[0].push(this.comprarCard());
+            this.players[0].push(this.comprarCard());
+        }
+        this.unoShouted = false;
+
+        // Check victory
+        if (this.players[0].length === 0) {
+            this.declararVencedor('Você');
+            return;
+        }
+
+        // Resolve Action Card
+        if (card.color === 'Wild') {
+            this.exibirColorPicker();
+        } else {
+            this.aplicarEfeitoCarta(card);
+            this.passarTurno();
+        }
+    }
+
+    exibirColorPicker() {
+        this.colorPickerDiv.classList.remove('hidden');
+        const pickers = this.colorPickerDiv.querySelectorAll('.picker-btn');
+        const pickHandler = (e) => {
+            const chosen = e.target.getAttribute('data-color');
+            this.currentColor = chosen;
+            this.colorPickerDiv.classList.add('hidden');
+            
+            // Cleanup events
+            pickers.forEach(b => b.removeEventListener('click', pickHandler));
+
+            const topCard = this.discardPile[this.discardPile.length - 1];
+            if (topCard.value === 'WildDrawFour') {
+                const nextPlayer = this.obterProximoJogador();
+                this.players[nextPlayer].push(this.comprarCard());
+                this.players[nextPlayer].push(this.comprarCard());
+                this.players[nextPlayer].push(this.comprarCard());
+                this.players[nextPlayer].push(this.comprarCard());
+                this.inverterOuPular(true); // skips next player
+            }
+            
+            this.passarTurno();
+        };
+
+        pickers.forEach(b => b.addEventListener('click', pickHandler));
+    }
+
+    aplicarEfeitoCarta(card) {
+        if (card.value === 'Skip') {
+            this.inverterOuPular(true);
+        } else if (card.value === 'Reverse') {
+            this.direction *= -1;
+            if (this.players.length === 2) {
+                // In 2 player, reverse behaves like Skip
+                this.inverterOuPular(true);
+            }
+        } else if (card.value === 'DrawTwo') {
+            const nextPlayer = this.obterProximoJogador();
+            this.players[nextPlayer].push(this.comprarCard());
+            this.players[nextPlayer].push(this.comprarCard());
+            this.inverterOuPular(true);
+        }
+    }
+
+    inverterOuPular(skip) {
+        if (skip) {
+            this.currentPlayerIdx = this.obterProximoJogador();
+        }
+    }
+
+    obterProximoJogador() {
+        let next = this.currentPlayerIdx + this.direction;
+        if (next < 0) next = 3;
+        if (next > 3) next = 0;
+        return next;
+    }
+
+    passarTurno() {
+        if (this.isGameOver) return;
+        this.currentPlayerIdx = this.obterProximoJogador();
+        this.definirTurno();
+    }
+
+    definirTurno() {
+        this.atualizarInterface();
+        if (this.currentPlayerIdx === 0) {
+            this.turnIndicator.textContent = 'Seu Turno! Jogue uma carta ou compre.';
+        } else {
+            this.turnIndicator.textContent = `Turno do Bot ${this.currentPlayerIdx}...`;
+            this.jogadaBot();
+        }
+    }
+
+    jogadaBot() {
+        const botIdx = this.currentPlayerIdx;
+        const hand = this.players[botIdx];
+
+        this.registerTimeout(() => {
+            if (this.isGameOver || this.currentPlayerIdx !== botIdx) return;
+
+            // Find playable cards
+            let playableCardIdx = -1;
+            for (let i = 0; i < hand.length; i++) {
+                if (this.ehJogavel(hand[i])) {
+                    playableCardIdx = i;
+                    break;
+                }
+            }
+
+            if (playableCardIdx !== -1) {
+                // Play card
+                const card = hand.splice(playableCardIdx, 1)[0];
+                this.discardPile.push(card);
+                this.currentColor = card.color;
+
+                // Simple simulated shouting
+                if (hand.length === 1) {
+                    this.turnIndicator.textContent = `Bot ${botIdx} gritou: UNO!`;
+                }
+
+                // Check victory
+                if (hand.length === 0) {
+                    this.declararVencedor(`Bot ${botIdx}`);
+                    return;
+                }
+
+                // Resolve effect
+                if (card.color === 'Wild') {
+                    // Pick a random color from bot hand or red by default
+                    const colorCounts = { 'Red': 0, 'Blue': 0, 'Green': 0, 'Yellow': 0 };
+                    hand.forEach(c => {
+                        if (colorCounts[c.color] !== undefined) colorCounts[c.color]++;
+                    });
+                    let bestColor = 'Red';
+                    let maxCount = -1;
+                    Object.keys(colorCounts).forEach(col => {
+                        if (colorCounts[col] > maxCount) {
+                            maxCount = colorCounts[col];
+                            bestColor = col;
+                        }
+                    });
+                    this.currentColor = bestColor;
+
+                    if (card.value === 'WildDrawFour') {
+                        const nextPlayer = this.obterProximoJogador();
+                        this.players[nextPlayer].push(this.comprarCard());
+                        this.players[nextPlayer].push(this.comprarCard());
+                        this.players[nextPlayer].push(this.comprarCard());
+                        this.players[nextPlayer].push(this.comprarCard());
+                        this.inverterOuPular(true);
+                    }
+                    this.passarTurno();
+                } else {
+                    this.aplicarEfeitoCarta(card);
+                    this.passarTurno();
+                }
+            } else {
+                // No playables, must draw card
+                const card = this.comprarCard();
+                hand.push(card);
+                this.turnIndicator.textContent = `Bot ${botIdx} comprou uma carta.`;
+
+                // If drawn is playable, immediately play it
+                if (this.ehJogavel(card)) {
+                    this.registerTimeout(() => {
+                        hand.pop();
+                        this.discardPile.push(card);
+                        this.currentColor = card.color;
+                        
+                        if (hand.length === 0) {
+                            this.declararVencedor(`Bot ${botIdx}`);
+                            return;
+                        }
+
+                        if (card.color === 'Wild') {
+                            this.currentColor = 'Blue'; // default bot pick color
+                            this.passarTurno();
+                        } else {
+                            this.aplicarEfeitoCarta(card);
+                            this.passarTurno();
+                        }
+                    }, 500);
+                } else {
+                    this.passarTurno();
+                }
+            }
+        }, 1100);
+    }
+
+    declararVencedor(name) {
+        this.isGameOver = true;
+        this.turnIndicator.textContent = `Fim de Jogo! ${name} venceu a partida de Uno!`;
+        alert(`Fim de Jogo! ${name} ganhou!`);
+    }
+
+    traduzirCor(col) {
+        const trans = { 'Red': 'Vermelho', 'Blue': 'Azul', 'Green': 'Verde', 'Yellow': 'Amarelo' };
+        return trans[col] || col;
+    }
+
+    obterCorCss(col) {
+        const colors = { 'Red': '#ff4b2b', 'Blue': '#00f2fe', 'Green': '#38ef7d', 'Yellow': '#ffeb3b' };
+        return colors[col] || '#ffffff';
+    }
+
+    registerTimeout(fn, ms) {
+        const id = setTimeout(fn, ms);
+        this.timeouts.push(id);
+    }
+
     cleanup() {
-        // No loops to clear
+        this.timeouts.forEach(clearTimeout);
+        this.timeouts = [];
+        this.drawPileDiv.replaceWith(this.drawPileDiv.cloneNode(true));
+        this.drawPileDiv = document.getElementById('uno-draw-pile');
+        this.shoutBtn.replaceWith(this.shoutBtn.cloneNode(true));
+        this.shoutBtn = document.getElementById('uno-shout-btn');
     }
 }
 
 
 // ==========================================================================
-// GAME 1: JOGO DA VELHA (TIC-TAC-TOE ENGINE)
+// GAME 2: PACIÊNCIA / SOLITAIRE ENGINE (KLONDIKE CLICK-TO-MOVE)
+// ==========================================================================
+class SolitaireGame {
+    constructor() {
+        this.deck = [];
+        this.waste = [];
+        this.foundations = [[], [], [], []]; // 4 piles
+        this.tableau = [[], [], [], [], [], [], []]; // 7 piles
+
+        // Selection memory state
+        this.selectedCard = null; // { pileType: 'tableau'|'waste', colIndex: 0-6, cardIndex: X }
+
+        // DOM elements references
+        this.stockSlot = document.getElementById('sol-stock');
+        this.wasteSlot = document.getElementById('sol-waste');
+        this.foundSlots = [
+            document.getElementById('sol-found-0'),
+            document.getElementById('sol-found-1'),
+            document.getElementById('sol-found-2'),
+            document.getElementById('sol-found-3')
+        ];
+        this.tableauSlots = [
+            document.getElementById('sol-col-0'),
+            document.getElementById('sol-col-1'),
+            document.getElementById('sol-col-2'),
+            document.getElementById('sol-col-3'),
+            document.getElementById('sol-col-4'),
+            document.getElementById('sol-col-5'),
+            document.getElementById('sol-col-6')
+        ];
+        this.statusText = document.getElementById('solitaire-status');
+
+        this.suitsSymbols = { 'Copas': '♥', 'Ouro': '♦', 'Espadas': '♠', 'Paus': '♣' };
+        this.suitsColors = { 'Copas': 'red', 'Ouro': 'red', 'Espadas': 'black', 'Paus': 'black' };
+    }
+
+    start() {
+        this.cleanup();
+        this.deck = [];
+        this.waste = [];
+        this.foundations = [[], [], [], []];
+        this.tableau = [[], [], [], [], [], [], []];
+        this.selectedCard = null;
+
+        this.statusText.textContent = 'Clique em uma carta para selecionar, depois no destino';
+        this.statusText.style.color = '#94a3b8';
+
+        // 1. Generate Standard deck of cards (52 cards)
+        const suits = ['Copas', 'Ouro', 'Espadas', 'Paus'];
+        suits.forEach(suit => {
+            for (let value = 1; value <= 13; value++) {
+                let name = value.toString();
+                if (value === 1) name = 'A';
+                if (value === 11) name = 'J';
+                if (value === 12) name = 'Q';
+                if (value === 13) name = 'K';
+
+                this.deck.push({
+                    suit,
+                    value,
+                    name,
+                    color: this.suitsColors[suit],
+                    symbol: this.suitsSymbols[suit],
+                    faceUp: false
+                });
+            }
+        });
+
+        this.shuffleDeck();
+
+        // 2. Deal Tableau piles (7 columns)
+        for (let i = 0; i < 7; i++) {
+            for (let j = i; j < 7; j++) {
+                this.tableau[j].push(this.deck.pop());
+            }
+            // Flip the top card of column face up
+            this.tableau[i][this.tableau[i].length - 1].faceUp = true;
+        }
+
+        // 3. Bind interaction handlers
+        this.stockSlot.addEventListener('click', () => this.comprarStock());
+        this.stockSlot.style.cursor = 'pointer';
+
+        this.desenharTabuleiro();
+    }
+
+    shuffleDeck() {
+        for (let i = this.deck.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [this.deck[i], this.deck[j]] = [this.deck[j], this.deck[i]];
+        }
+    }
+
+    comprarStock() {
+        this.selectedCard = null; // Clear selection
+        if (this.deck.length === 0) {
+            // Recycle waste back to stock
+            if (this.waste.length === 0) return;
+            this.deck = [...this.waste].reverse().map(c => {
+                c.faceUp = false;
+                return c;
+            });
+            this.waste = [];
+        } else {
+            // Draw card
+            const card = this.deck.pop();
+            card.faceUp = true;
+            this.waste.push(card);
+        }
+        this.desenharTabuleiro();
+    }
+
+    desenharTabuleiro() {
+        // 1. Render stock back indicator
+        if (this.deck.length > 0) {
+            this.stockSlot.innerHTML = `<div class="solitaire-card-back">♠</div>`;
+        } else {
+            this.stockSlot.innerHTML = `♻️`; // Recycle symbol
+        }
+
+        // 2. Render waste card
+        if (this.waste.length > 0) {
+            const topWaste = this.waste[this.waste.length - 1];
+            this.wasteSlot.innerHTML = '';
+            const cardEl = this.criarCardElement(topWaste);
+            
+            // Check if selected
+            if (this.selectedCard && this.selectedCard.pileType === 'waste') {
+                cardEl.classList.add('selected-sol-card');
+            }
+
+            cardEl.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.selecionarOrigem('waste', null, this.waste.length - 1);
+            });
+            this.wasteSlot.appendChild(cardEl);
+            this.wasteSlot.style.cursor = 'pointer';
+        } else {
+            this.wasteSlot.innerHTML = '';
+            this.wasteSlot.style.cursor = 'default';
+        }
+
+        // 3. Render Foundation slots
+        for (let i = 0; i < 4; i++) {
+            const slot = this.foundSlots[i];
+            const pile = this.foundations[i];
+            
+            slot.innerHTML = '';
+            const suitLabel = ['♦', '♠', '♥', '♣'][i];
+            slot.textContent = suitLabel;
+            slot.className = 'solitaire-card-slot slot-empty foundation-slot';
+
+            if (pile.length > 0) {
+                const topFoundCard = pile[pile.length - 1];
+                const cardEl = this.criarCardElement(topFoundCard);
+                cardEl.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.selecionarOrigem('found', i, pile.length - 1);
+                });
+                slot.appendChild(cardEl);
+            }
+
+            // Click foundation acts as destination
+            slot.addEventListener('click', () => this.moverParaDestino('found', i));
+        }
+
+        // 4. Render 7 Tableau columns
+        for (let i = 0; i < 7; i++) {
+            const colSlot = this.tableauSlots[i];
+            const pile = this.tableau[i];
+            
+            colSlot.innerHTML = '';
+            colSlot.className = 'solitaire-column-slot';
+            
+            // Allow empty columns to receive Kings
+            colSlot.addEventListener('click', () => this.moverParaDestino('tableau', i));
+
+            pile.forEach((card, index) => {
+                let cardEl;
+                if (card.faceUp) {
+                    cardEl = this.criarCardElement(card);
+                    
+                    // Card click as select or destination
+                    cardEl.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (this.selectedCard) {
+                            // If something selected, try moving onto this card
+                            this.moverParaDestino('tableau', i);
+                        } else {
+                            this.selecionarOrigem('tableau', i, index);
+                        }
+                    });
+
+                    // Check if card is selected
+                    if (this.selectedCard && 
+                        this.selectedCard.pileType === 'tableau' && 
+                        this.selectedCard.colIndex === i && 
+                        this.selectedCard.cardIndex === index) {
+                        cardEl.classList.add('selected-sol-card');
+                    }
+                } else {
+                    cardEl = document.createElement('div');
+                    cardEl.className = 'solitaire-card-back';
+                    cardEl.textContent = '♠';
+                    cardEl.style.fontSize = '1.3rem';
+                }
+
+                // Stacking offset effect
+                cardEl.style.top = `${index * 16}px`;
+                colSlot.appendChild(cardEl);
+            });
+        }
+    }
+
+    criarCardElement(card) {
+        const el = document.createElement('div');
+        el.className = `solitaire-card card-${card.color}-suit`;
+        el.innerHTML = `
+            <div class="solitaire-card-suit-top">${card.symbol}</div>
+            <div class="solitaire-card-value">${card.name}</div>
+            <div class="solitaire-card-suit-bottom">${card.symbol}</div>
+        `;
+        return el;
+    }
+
+    selecionarOrigem(pileType, colIndex, cardIndex) {
+        // Must select faceUp card
+        if (pileType === 'tableau' && !this.tableau[colIndex][cardIndex].faceUp) return;
+
+        this.selectedCard = { pileType, colIndex, cardIndex };
+        this.statusText.textContent = 'Carta selecionada! Clique no destino.';
+        this.statusText.style.color = '#38ef7d';
+
+        this.desenharTabuleiro();
+    }
+
+    moverParaDestino(destType, destColIdx) {
+        if (!this.selectedCard) return;
+
+        const sourcePile = this.obterSourcePile(this.selectedCard);
+        const movingCards = sourcePile.slice(this.selectedCard.cardIndex);
+        const targetPile = destType === 'tableau' ? this.tableau[destColIdx] : this.foundations[destColIdx];
+
+        let valValido = false;
+
+        // 1. Move onto Tableau column
+        if (destType === 'tableau') {
+            const bottomCard = targetPile[targetPile.length - 1];
+            const firstMovingCard = movingCards[0];
+
+            if (!bottomCard) {
+                // Empty column accepts Kings only (value 13)
+                if (firstMovingCard.value === 13) valValido = true;
+            } else {
+                // Alternating color and descending sequence
+                if (bottomCard.color !== firstMovingCard.color && bottomCard.value === firstMovingCard.value + 1) {
+                    valValido = true;
+                }
+            }
+        } 
+        // 2. Move onto Foundation Slot
+        else if (destType === 'found') {
+            // Can only move single cards to foundation
+            if (movingCards.length === 1) {
+                const targetCard = movingCards[0];
+                const bottomFound = targetPile[targetPile.length - 1];
+
+                if (!bottomFound) {
+                    // Empty foundation slot accepts Aces only (value 1)
+                    if (targetCard.value === 1) valValido = true;
+                } else {
+                    // Same suit and ascending sequence
+                    if (bottomFound.suit === targetCard.suit && bottomFound.value + 1 === targetCard.value) {
+                        valValido = true;
+                    }
+                }
+            }
+        }
+
+        if (valValido) {
+            // Execute move
+            const sourceIndex = this.selectedCard.cardIndex;
+            
+            // Remove from source and push to target
+            const cards = sourcePile.splice(sourceIndex);
+            cards.forEach(c => targetPile.push(c));
+
+            // Flip top source card face up
+            if (sourcePile.length > 0) {
+                sourcePile[sourcePile.length - 1].faceUp = true;
+            }
+
+            this.selectedCard = null;
+            this.statusText.textContent = 'Movimento realizado com sucesso!';
+            this.statusText.style.color = '#38ef7d';
+            
+            this.verificarVitoria();
+        } else {
+            this.selectedCard = null;
+            this.statusText.textContent = 'Movimento inválido! Tente de novo.';
+            this.statusText.style.color = '#ff4b2b';
+        }
+
+        this.desenharTabuleiro();
+    }
+
+    obterSourcePile(sel) {
+        if (sel.pileType === 'waste') return this.waste;
+        if (sel.pileType === 'found') return this.foundations[sel.colIndex];
+        return this.tableau[sel.colIndex];
+    }
+
+    verificarVitoria() {
+        // Solitaire is won if all 4 foundations have 13 cards (total 52 cards)
+        const totalFound = this.foundations.reduce((sum, pile) => sum + pile.length, 0);
+        if (totalFound === 52) {
+            this.statusText.textContent = 'Parabéns! Você venceu a Paciência!';
+            this.statusText.style.color = '#ffeb3b';
+            alert('Parabéns! Você venceu a Paciência!');
+        }
+    }
+
+    cleanup() {
+        this.stockSlot.replaceWith(this.stockSlot.cloneNode(true));
+        this.stockSlot = document.getElementById('sol-stock');
+        this.tableauSlots.forEach(s => s.replaceWith(s.cloneNode(true)));
+        this.tableauSlots = [
+            document.getElementById('sol-col-0'),
+            document.getElementById('sol-col-1'),
+            document.getElementById('sol-col-2'),
+            document.getElementById('sol-col-3'),
+            document.getElementById('sol-col-4'),
+            document.getElementById('sol-col-5'),
+            document.getElementById('sol-col-6')
+        ];
+    }
+}
+
+
+// ==========================================================================
+// GAME 3: JOGO DA VELHA (TIC-TAC-TOE ENGINE) - MODIFIED FOR AI
 // ==========================================================================
 class TicTacToeGame {
     constructor() {
         this.board = Array(9).fill('');
         this.currentPlayer = 'X';
         this.isGameOver = false;
+        this.gameMode = 'local'; // 'local' | 'bot'
+
+        this.modeSelectDiv = document.getElementById('velha-mode-select');
+        this.boardContentDiv = document.getElementById('velha-board-content');
+        this.btnLocal = document.getElementById('btn-velha-local');
+        this.btnBot = document.getElementById('btn-velha-bot');
 
         this.turnoText = document.getElementById('velha-turno');
         this.statusText = document.getElementById('velha-status');
@@ -305,13 +1039,30 @@ class TicTacToeGame {
     }
 
     start() {
+        this.cleanup();
         this.board = Array(9).fill('');
         this.currentPlayer = 'X';
         this.isGameOver = false;
 
+        // Show mode select, hide board content
+        this.modeSelectDiv.classList.remove('hidden');
+        this.boardContentDiv.classList.add('hidden');
+
+        // Setup click mode handlers
+        this.btnLocal.onclick = () => this.inicializarModo('local');
+        this.btnBot.onclick = () => this.inicializarModo('bot');
+    }
+
+    inicializarModo(mode) {
+        this.gameMode = mode;
+        this.modeSelectDiv.classList.add('hidden');
+        this.boardContentDiv.classList.remove('hidden');
+
         this.turnoText.textContent = this.currentPlayer;
         this.turnoText.className = 'active-player-text x';
-        this.statusText.textContent = 'Clique em uma casa vazia para jogar';
+        this.statusText.textContent = this.gameMode === 'bot' ? 
+            'Seu turno (X). Clique em uma casa vazia.' : 
+            'Clique em uma casa vazia para jogar';
         this.statusText.style.color = '#94a3b8';
 
         this.cells.forEach(cell => {
@@ -323,18 +1074,24 @@ class TicTacToeGame {
 
     onCellClick(e) {
         if (this.isGameOver) return;
+        
+        // Prevent player from clicking during Bot's turn
+        if (this.gameMode === 'bot' && this.currentPlayer === 'O') return;
+
         const cell = e.target;
         const index = parseInt(cell.getAttribute('data-index'));
 
-        // Cell already occupied
         if (this.board[index] !== '') return;
 
-        // Apply symbol
+        this.executarJogada(index);
+    }
+
+    executarJogada(index) {
         this.board[index] = this.currentPlayer;
+        const cell = this.cells[index];
         cell.textContent = this.currentPlayer;
         cell.classList.add(this.currentPlayer.toLowerCase());
 
-        // Validate Victory
         const winCombo = this.checkWin();
         if (winCombo) {
             this.isGameOver = true;
@@ -344,7 +1101,6 @@ class TicTacToeGame {
             return;
         }
 
-        // Validate Draw
         if (this.board.every(cellValue => cellValue !== '')) {
             this.isGameOver = true;
             this.statusText.textContent = 'Velha! A partida terminou em empate.';
@@ -352,10 +1108,72 @@ class TicTacToeGame {
             return;
         }
 
-        // Switch turns
+        // Swap turns
         this.currentPlayer = this.currentPlayer === 'X' ? 'O' : 'X';
         this.turnoText.textContent = this.currentPlayer;
         this.turnoText.className = `active-player-text ${this.currentPlayer.toLowerCase()}`;
+
+        // Trigger Bot
+        if (this.gameMode === 'bot' && this.currentPlayer === 'O') {
+            this.statusText.textContent = 'O robô está pensando...';
+            this.statusText.style.color = '#cbd5e1';
+            
+            setTimeout(() => {
+                if (this.isGameOver) return;
+                const botMove = this.calcularJogadaBot();
+                this.executarJogada(botMove);
+            }, 600);
+        } else {
+            this.statusText.textContent = this.gameMode === 'bot' ? 
+                'Seu turno (X). Escolha uma casa.' : 
+                `Turno do jogador ${this.currentPlayer}`;
+            this.statusText.style.color = '#94a3b8';
+        }
+    }
+
+    calcularJogadaBot() {
+        const board = this.board;
+        
+        // 1. Heuristic: Check if Bot 'O' can win this turn
+        for (let i = 0; i < 9; i++) {
+            if (board[i] === '') {
+                board[i] = 'O';
+                if (this.checkWin()) {
+                    board[i] = '';
+                    return i;
+                }
+                board[i] = '';
+            }
+        }
+
+        // 2. Heuristic: Block Player 'X' from winning this turn
+        for (let i = 0; i < 9; i++) {
+            if (board[i] === '') {
+                board[i] = 'X';
+                if (this.checkWin()) {
+                    board[i] = '';
+                    return i;
+                }
+                board[i] = '';
+            }
+        }
+
+        // 3. Take center slot
+        if (board[4] === '') return 4;
+
+        // 4. Take corners
+        const corners = [0, 2, 6, 8];
+        const openCorners = corners.filter(i => board[i] === '');
+        if (openCorners.length > 0) {
+            return openCorners[Math.floor(Math.random() * openCorners.length)];
+        }
+
+        // 5. Random
+        const empties = [];
+        for (let i = 0; i < 9; i++) {
+            if (board[i] === '') empties.push(i);
+        }
+        return empties[Math.floor(Math.random() * empties.length)];
     }
 
     checkWin() {
@@ -379,12 +1197,14 @@ class TicTacToeGame {
         this.cells.forEach(cell => {
             cell.removeEventListener('click', this.boundCellClick);
         });
+        this.btnLocal.onclick = null;
+        this.btnBot.onclick = null;
     }
 }
 
 
 // ==========================================================================
-// GAME 2: DAMAS (CHECKERS ENGINE)
+// GAME 4: DAMAS (CHECKERS ENGINE) - MODIFIED FOR AI
 // ==========================================================================
 class CheckersGame {
     constructor() {
@@ -394,17 +1214,23 @@ class CheckersGame {
         this.blackCountText = document.getElementById('damas-black-captured');
         this.statusText = document.getElementById('damas-status');
 
+        this.modeSelectDiv = document.getElementById('damas-mode-select');
+        this.boardContentDiv = document.getElementById('damas-board-content');
+        this.btnLocal = document.getElementById('btn-damas-local');
+        this.btnBot = document.getElementById('btn-damas-bot');
+
         this.rows = 8;
         this.cols = 8;
         
         this.board = [];
         this.currentPlayer = 'red'; // red vs black
-        this.selectedPiece = null; // { r, c }
-        this.validMoves = []; // array of { r, c, capture: { r, c } }
+        this.gameMode = 'local'; // 'local' | 'bot'
+        this.selectedPiece = null;
+        this.validMoves = [];
         this.isGameOver = false;
 
-        this.redCount = 12; // remaining
-        this.blackCount = 12; // remaining
+        this.redCount = 12;
+        this.blackCount = 12;
     }
 
     start() {
@@ -417,14 +1243,27 @@ class CheckersGame {
         this.redCount = 12;
         this.blackCount = 12;
 
+        this.redCountText.textContent = this.redCount;
+        this.blackCountText.textContent = this.blackCount;
+
+        // Show mode select, hide board
+        this.modeSelectDiv.classList.remove('hidden');
+        this.boardContentDiv.classList.add('hidden');
+
+        this.btnLocal.onclick = () => this.inicializarModo('local');
+        this.btnBot.onclick = () => this.inicializarModo('bot');
+    }
+
+    inicializarModo(mode) {
+        this.gameMode = mode;
+        this.modeSelectDiv.classList.add('hidden');
+        this.boardContentDiv.classList.remove('hidden');
+
         this.turnoText.textContent = 'Vermelhas';
         this.turnoText.className = 'active-player-text';
         this.turnoText.style.color = '#ff4b2b';
         this.statusText.textContent = 'Selecione uma de suas peças vermelhas para mover';
         this.statusText.style.color = '#94a3b8';
-
-        this.redCountText.textContent = this.redCount;
-        this.blackCountText.textContent = this.blackCount;
 
         this.setupBoard();
         this.desenharTabuleiro();
@@ -478,13 +1317,13 @@ class CheckersGame {
                         chip.classList.add('king');
                     }
 
-                    // Add click listeners to current player's pieces
-                    if (!this.isGameOver && piece.type === this.currentPlayer) {
+                    // Add click listeners to current player's pieces (disable player click on bot turn)
+                    const blockInput = this.gameMode === 'bot' && this.currentPlayer === 'black';
+                    if (!this.isGameOver && piece.type === this.currentPlayer && !blockInput) {
                         chip.addEventListener('click', () => this.selecionarPeca(r, c));
                     }
                     cellWrapper.appendChild(chip);
                 } else if (isDark && !moveOption) {
-                    // Empty dark cell clicks deselect current choice
                     cellWrapper.addEventListener('click', () => this.deselecionar());
                 }
 
@@ -541,10 +1380,8 @@ class CheckersGame {
             if (this.dentroDoTabuleiro(nr, nc)) {
                 const target = this.board[nr][nc];
                 if (!target) {
-                    // Normal move to empty square
                     moves.push({ r: nr, c: nc, capture: null });
                 } else if (target.type === opponent) {
-                    // Check capture jump
                     const jr = nr + dr;
                     const jc = nc + dc;
                     if (this.dentroDoTabuleiro(jr, jc) && !this.board[jr][jc]) {
@@ -565,7 +1402,6 @@ class CheckersGame {
 
         const piece = this.board[sr][sc];
 
-        // Move piece
         this.board[tr][tc] = piece;
         this.board[sr][sc] = null;
 
@@ -612,12 +1448,64 @@ class CheckersGame {
 
         this.selectedPiece = null;
         this.validMoves = [];
-        this.statusText.textContent = this.currentPlayer === 'red' ? 
-            'Selecione uma de suas peças vermelhas para mover' : 
-            'Selecione uma de suas peças pretas para mover';
-        this.statusText.style.color = '#94a3b8';
 
         this.desenharTabuleiro();
+
+        // Trigger Bot
+        if (this.gameMode === 'bot' && this.currentPlayer === 'black') {
+            this.statusText.textContent = 'O robô está pensando...';
+            this.statusText.style.color = '#cbd5e1';
+            this.executarTurnoBot();
+        } else {
+            this.statusText.textContent = this.currentPlayer === 'red' ? 
+                'Selecione uma de suas peças vermelhas para mover' : 
+                'Selecione uma de suas peças pretas para mover';
+            this.statusText.style.color = '#94a3b8';
+        }
+    }
+
+    executarTurnoBot() {
+        if (this.isGameOver || this.currentPlayer !== 'black') return;
+
+        // Gather all valid moves for all Black pieces
+        let allMoves = [];
+        for (let r = 0; r < this.rows; r++) {
+            for (let c = 0; c < this.cols; c++) {
+                const piece = this.board[r][c];
+                if (piece && piece.type === 'black') {
+                    const moves = this.obterMovimentosValidos(r, c);
+                    moves.forEach(m => {
+                        allMoves.push({
+                            from: { r, c },
+                            to: { r: m.r, c: m.c },
+                            capture: m.capture
+                        });
+                    });
+                }
+            }
+        }
+
+        // If no moves, black loses
+        if (allMoves.length === 0) {
+            this.statusText.textContent = 'Sem movimentos! As Vermelhas ganharam!';
+            this.statusText.style.color = '#38ef7d';
+            this.isGameOver = true;
+            this.deseletarFimDeJogo();
+            return;
+        }
+
+        // Prioritize capture moves
+        const captures = allMoves.filter(m => m.capture !== null);
+        const chosenMove = captures.length > 0 ? 
+            captures[Math.floor(Math.random() * captures.length)] : 
+            allMoves[Math.floor(Math.random() * allMoves.length)];
+
+        setTimeout(() => {
+            if (this.isGameOver || this.currentPlayer !== 'black') return;
+            this.selectedPiece = chosenMove.from;
+            this.validMoves = this.obterMovimentosValidos(chosenMove.from.r, chosenMove.from.c);
+            this.executarMovimento(chosenMove.to.r, chosenMove.to.c);
+        }, 650);
     }
 
     deseletarFimDeJogo() {
@@ -632,12 +1520,14 @@ class CheckersGame {
 
     cleanup() {
         this.grid.innerHTML = '';
+        this.btnLocal.onclick = null;
+        this.btnBot.onclick = null;
     }
 }
 
 
 // ==========================================================================
-// GAME 3: XADREZ (CHESS ENGINE)
+// GAME 5: XADREZ (CHESS ENGINE) - MODIFIED FOR AI
 // ==========================================================================
 class ChessGame {
     constructor() {
@@ -645,13 +1535,19 @@ class ChessGame {
         this.turnoText = document.getElementById('xadrez-turno');
         this.statusText = document.getElementById('xadrez-status');
 
+        this.modeSelectDiv = document.getElementById('xadrez-mode-select');
+        this.boardContentDiv = document.getElementById('xadrez-board-content');
+        this.btnLocal = document.getElementById('btn-xadrez-local');
+        this.btnBot = document.getElementById('btn-xadrez-bot');
+
         this.rows = 8;
         this.cols = 8;
 
         this.board = [];
         this.currentPlayer = 'w'; // w = White, b = Black
-        this.selectedSquare = null; // { r, c }
-        this.validMoves = []; // array of { r, c }
+        this.gameMode = 'local'; // 'local' | 'bot'
+        this.selectedSquare = null;
+        this.validMoves = [];
         this.isGameOver = false;
 
         this.unicodePieces = {
@@ -667,6 +1563,19 @@ class ChessGame {
         this.selectedSquare = null;
         this.validMoves = [];
         this.isGameOver = false;
+
+        // Show mode select, hide board content
+        this.modeSelectDiv.classList.remove('hidden');
+        this.boardContentDiv.classList.add('hidden');
+
+        this.btnLocal.onclick = () => this.inicializarModo('local');
+        this.btnBot.onclick = () => this.inicializarModo('bot');
+    }
+
+    inicializarModo(mode) {
+        this.gameMode = mode;
+        this.modeSelectDiv.classList.add('hidden');
+        this.boardContentDiv.classList.remove('hidden');
 
         this.turnoText.textContent = 'Brancas';
         this.turnoText.style.color = '#f8fafc';
@@ -722,16 +1631,16 @@ class ChessGame {
                     glyph.className = `chess-piece chess-${piece.color === 'w' ? 'white' : 'black'}`;
                     glyph.textContent = this.unicodePieces[piece.color][piece.type];
 
-                    // Select trigger
-                    if (!this.isGameOver && piece.color === this.currentPlayer) {
+                    // Select trigger (block selection on Bot turn)
+                    const blockInput = this.gameMode === 'bot' && this.currentPlayer === 'b';
+                    if (!this.isGameOver && piece.color === this.currentPlayer && !blockInput) {
                         glyph.addEventListener('click', (e) => {
-                            e.stopPropagation(); // Avoid cellWrapper click reset
+                            e.stopPropagation();
                             this.selecionarSquare(r, c);
                         });
                     }
                     cellWrapper.appendChild(glyph);
                 } else if (!isMoveValid) {
-                    // Empty square deselects
                     cellWrapper.addEventListener('click', () => this.deselecionar());
                 }
 
@@ -774,19 +1683,16 @@ class ChessGame {
         const oppColor = this.currentPlayer === 'w' ? 'b' : 'w';
 
         switch (piece.type) {
-            case 'p': { // Pawn rules
+            case 'p': {
                 const dir = this.currentPlayer === 'w' ? -1 : 1;
                 const startRow = this.currentPlayer === 'w' ? 6 : 1;
                 
-                // Move 1 forward
                 if (this.dentroDoTabuleiro(r + dir, c) && !this.board[r + dir][c]) {
                     moves.push({ r: r + dir, c });
-                    // Move 2 forward from starting line
                     if (r === startRow && !this.board[r + 2 * dir][c]) {
                         moves.push({ r: r + 2 * dir, c });
                     }
                 }
-                // Diagonal captures
                 const diagCols = [c - 1, c + 1];
                 diagCols.forEach(nc => {
                     if (this.dentroDoTabuleiro(r + dir, nc)) {
@@ -798,19 +1704,19 @@ class ChessGame {
                 });
                 break;
             }
-            case 'r': { // Rook rules
+            case 'r': {
                 this.adicionarMovimentosLongos(r, c, [[1,0], [-1,0], [0,1], [0,-1]], moves, oppColor);
                 break;
             }
-            case 'b': { // Bishop rules
+            case 'b': {
                 this.adicionarMovimentosLongos(r, c, [[1,1], [1,-1], [-1,1], [-1,-1]], moves, oppColor);
                 break;
             }
-            case 'q': { // Queen rules
+            case 'q': {
                 this.adicionarMovimentosLongos(r, c, [[1,0], [-1,0], [0,1], [0,-1], [1,1], [1,-1], [-1,1], [-1,-1]], moves, oppColor);
                 break;
             }
-            case 'k': { // King rules
+            case 'k': {
                 const offsets = [[1,0], [-1,0], [0,1], [0,-1], [1,1], [1,-1], [-1,1], [-1,-1]];
                 offsets.forEach(([dr, dc]) => {
                     const nr = r + dr;
@@ -824,7 +1730,7 @@ class ChessGame {
                 });
                 break;
             }
-            case 'n': { // Knight rules
+            case 'n': {
                 const offsets = [[2,1], [2,-1], [-2,1], [-2,-1], [1,2], [1,-2], [-1,2], [-1,-2]];
                 offsets.forEach(([dr, dc]) => {
                     const nr = r + dr;
@@ -855,7 +1761,7 @@ class ChessGame {
                     if (target.color === oppColor) {
                         moves.push({ r: nr, c: nc });
                     }
-                    break; // blocked path
+                    break;
                 }
                 nr += dr;
                 nc += dc;
@@ -869,16 +1775,15 @@ class ChessGame {
         const piece = this.board[sr][sc];
         const targetPiece = this.board[tr][tc];
 
-        // Move piece
         this.board[tr][tc] = piece;
         this.board[sr][sc] = null;
 
-        // Special promotion rule for pawn reaching opposite end
+        // Pawn promotion
         if (piece.type === 'p' && (tr === 0 || tr === 7)) {
-            piece.type = 'q'; // Automate Queen promotion for simplicity
+            piece.type = 'q';
         }
 
-        // Validate King Capture (simple Chess checkmate end condition)
+        // King capture
         if (targetPiece && targetPiece.type === 'k') {
             this.statusText.textContent = `Xeque-mate! Jogador das ${this.currentPlayer === 'w' ? 'Brancas' : 'Pretas'} venceu!`;
             this.statusText.style.color = '#38ef7d';
@@ -887,19 +1792,71 @@ class ChessGame {
             return;
         }
 
-        // Swap turns
+        // Swap turn
         this.currentPlayer = this.currentPlayer === 'w' ? 'b' : 'w';
         this.turnoText.textContent = this.currentPlayer === 'w' ? 'Brancas' : 'Pretas';
         this.turnoText.style.color = this.currentPlayer === 'w' ? '#f8fafc' : '#38bdf8';
 
         this.selectedSquare = null;
         this.validMoves = [];
-        this.statusText.textContent = this.currentPlayer === 'w' ? 
-            'Selecione uma de suas peças brancas para jogar' : 
-            'Selecione uma de suas peças pretas para jogar';
-        this.statusText.style.color = '#94a3b8';
 
         this.desenharTabuleiro();
+
+        // Trigger Bot
+        if (this.gameMode === 'bot' && this.currentPlayer === 'b') {
+            this.statusText.textContent = 'O robô está pensando...';
+            this.statusText.style.color = '#cbd5e1';
+            this.executarTurnoBot();
+        } else {
+            this.statusText.textContent = this.currentPlayer === 'w' ? 
+                'Selecione uma de suas peças brancas para jogar' : 
+                'Selecione uma de suas peças pretas para jogar';
+            this.statusText.style.color = '#94a3b8';
+        }
+    }
+
+    executarTurnoBot() {
+        if (this.isGameOver || this.currentPlayer !== 'b') return;
+
+        // Gather all valid moves for Black
+        let allMoves = [];
+        for (let r = 0; r < this.rows; r++) {
+            for (let c = 0; c < this.cols; c++) {
+                const piece = this.board[r][c];
+                if (piece && piece.color === 'b') {
+                    const moves = this.obterMovimentosValidos(r, c);
+                    moves.forEach(m => {
+                        const target = this.board[m.r][m.c];
+                        allMoves.push({
+                            from: { r, c },
+                            to: m,
+                            isCapture: target !== null
+                        });
+                    });
+                }
+            }
+        }
+
+        if (allMoves.length === 0) {
+            this.statusText.textContent = 'Xeque-mate! As Brancas venceram!';
+            this.statusText.style.color = '#38ef7d';
+            this.isGameOver = true;
+            this.deseletarFimDeJogo();
+            return;
+        }
+
+        // Prioritize capture moves
+        const captures = allMoves.filter(m => m.isCapture);
+        const chosenMove = captures.length > 0 ? 
+            captures[Math.floor(Math.random() * captures.length)] : 
+            allMoves[Math.floor(Math.random() * allMoves.length)];
+
+        setTimeout(() => {
+            if (this.isGameOver || this.currentPlayer !== 'b') return;
+            this.selectedSquare = chosenMove.from;
+            this.validMoves = this.obterMovimentosValidos(chosenMove.from.r, chosenMove.from.c);
+            this.executarMovimento(chosenMove.to.r, chosenMove.to.c);
+        }, 650);
     }
 
     deseletarFimDeJogo() {
@@ -914,12 +1871,14 @@ class ChessGame {
 
     cleanup() {
         this.grid.innerHTML = '';
+        this.btnLocal.onclick = null;
+        this.btnBot.onclick = null;
     }
 }
 
 
 // ==========================================================================
-// GAME 4: SEQUÊNCIA DE MEMÓRIA (SIMON ENGINE)
+// GAME 6: SEQUÊNCIA DE MEMÓRIA (SIMON ENGINE)
 // ==========================================================================
 class MemoryGame {
     constructor() {
@@ -1141,7 +2100,7 @@ class MemoryGame {
 
 
 // ==========================================================================
-// GAME 5: COBRINHA (SNAKE ENGINE)
+// GAME 7: COBRINHA (SNAKE ENGINE)
 // ==========================================================================
 class SnakeGame {
     constructor() {
@@ -1415,7 +2374,7 @@ class SnakeGame {
 
 
 // ==========================================================================
-// GAME 6: CAMPO MINADO (MINESWEEPER ENGINE)
+// GAME 8: CAMPO MINADO (MINESWEEPER ENGINE)
 // ==========================================================================
 class MinesweeperGame {
     constructor() {
@@ -1638,7 +2597,7 @@ class MinesweeperGame {
 
 
 // ==========================================================================
-// GAME 7: TETRIS ENGINE
+// GAME 9: TETRIS ENGINE
 // ==========================================================================
 class TetrisGame {
     constructor() {
@@ -2014,18 +2973,18 @@ class TetrisGame {
         if (Math.abs(diffX) > Math.abs(diffY)) {
             // Horizontal swipe
             if (Math.abs(diffX) > threshold) {
-                if (diffX > 0) { // Swipe Right -> Move piece Right
+                if (diffX > 0) { // Swipe Right
                     this.mover(1);
-                } else if (diffX < 0) { // Swipe Left -> Move piece Left
+                } else if (diffX < 0) { // Swipe Left
                     this.mover(-1);
                 }
             }
         } else {
             // Vertical swipe
             if (Math.abs(diffY) > threshold) {
-                if (diffY > 0) { // Swipe Down -> Drop piece
+                if (diffY > 0) { // Swipe Down
                     this.drop();
-                } else if (diffY < 0) { // Swipe Up -> Rotate piece
+                } else if (diffY < 0) { // Swipe Up
                     this.rotacionarPeca();
                 }
             }
