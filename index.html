@@ -25,7 +25,108 @@
 
         <!-- Main Menu Grid (Game Showcase) -->
         <main id="menu-principal" class="grid-games">
-            <!-- Card 1: Sequência de Memória -->
+            <!-- Card 1: Uno -->
+            <div class="game-card card-uno" data-game="uno">
+                <div class="card-inner">
+                    <div class="card-visual">
+                        <svg viewBox="0 0 100 100" class="card-icon">
+                            <rect x="25" y="15" width="40" height="60" rx="6" fill="#ff4b2b" stroke="#fff" stroke-width="3" transform="rotate(-10 45 45)" />
+                            <rect x="40" y="20" width="40" height="60" rx="6" fill="#ff416c" stroke="#fff" stroke-width="3" transform="rotate(10 60 50)" />
+                            <circle cx="60" cy="50" r="14" fill="#ffeb3b" />
+                            <text x="60" y="56" font-family="Outfit, sans-serif" font-weight="800" font-size="18" fill="#ff4b2b" text-anchor="middle">1</text>
+                        </svg>
+                    </div>
+                    <div class="card-info">
+                        <h3>Uno</h3>
+                        <p>Descarte todas as suas cartas e grite UNO neste divertido clássico de cartas familiar!</p>
+                        <button class="btn-play">Jogar Agora</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Xadrez -->
+            <div class="game-card card-xadrez" data-game="xadrez">
+                <div class="card-inner">
+                    <div class="card-visual">
+                        <svg viewBox="0 0 100 100" class="card-icon">
+                            <rect x="15" y="15" width="35" height="35" fill="#ffffff" rx="2" />
+                            <rect x="50" y="15" width="35" height="35" fill="#2c3e50" rx="2" />
+                            <rect x="15" y="50" width="35" height="35" fill="#2c3e50" rx="2" />
+                            <rect x="50" y="50" width="35" height="35" fill="#ffffff" rx="2" />
+                            <path d="M50 25 L55 35 L65 30 L60 45 L68 55 L32 55 L40 45 L35 30 L45 35 Z" fill="#e0e0e0" stroke="#111" stroke-width="2" />
+                            <rect x="35" y="58" width="30" height="8" rx="2" fill="#e0e0e0" stroke="#111" stroke-width="2" />
+                        </svg>
+                    </div>
+                    <div class="card-info">
+                        <h3>Xadrez</h3>
+                        <p>O derradeiro jogo de estratégia mental. Mova suas peças com sabedoria e conquiste o xeque-mate!</p>
+                        <button class="btn-play">Jogar Agora</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: Damas -->
+            <div class="game-card card-damas" data-game="damas">
+                <div class="card-inner">
+                    <div class="card-visual">
+                        <svg viewBox="0 0 100 100" class="card-icon">
+                            <circle cx="50" cy="50" r="30" fill="#f2994a" stroke="#fff" stroke-width="2" />
+                            <circle cx="50" cy="50" r="22" fill="none" stroke="#fff" stroke-width="1.5" stroke-dasharray="4,2" />
+                            <circle cx="50" cy="50" r="14" fill="#f2c94c" />
+                            <circle cx="35" cy="35" r="8" fill="#f2c94c" opacity="0.8" />
+                        </svg>
+                    </div>
+                    <div class="card-info">
+                        <h3>Damas</h3>
+                        <p>Pule sobre as peças inimigas, corra para alcançar o lado oposto e coroe as suas damas!</p>
+                        <button class="btn-play">Jogar Agora</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4: Jogo da Velha -->
+            <div class="game-card card-velha" data-game="velha">
+                <div class="card-inner">
+                    <div class="card-visual">
+                        <svg viewBox="0 0 100 100" class="card-icon">
+                            <line x1="38" y1="15" x2="38" y2="85" stroke="#4facfe" stroke-width="4" stroke-linecap="round" />
+                            <line x1="62" y1="15" x2="62" y2="85" stroke="#4facfe" stroke-width="4" stroke-linecap="round" />
+                            <line x1="15" y1="38" x2="85" y2="38" stroke="#4facfe" stroke-width="4" stroke-linecap="round" />
+                            <line x1="15" y1="62" x2="85" y2="62" stroke="#4facfe" stroke-width="4" stroke-linecap="round" />
+                            <line x1="20" y1="20" x2="32" y2="32" stroke="#00f2fe" stroke-width="4.5" stroke-linecap="round" />
+                            <line x1="32" y1="20" x2="20" y2="32" stroke="#00f2fe" stroke-width="4.5" stroke-linecap="round" />
+                            <circle cx="50" cy="50" r="7" fill="none" stroke="#9b51e0" stroke-width="4.5" />
+                        </svg>
+                    </div>
+                    <div class="card-info">
+                        <h3>Jogo da Velha</h3>
+                        <p>Rápido e divertido. Alinhe três símbolos idênticos na horizontal, vertical ou diagonal!</p>
+                        <button class="btn-play">Jogar Agora</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 5: Paciência -->
+            <div class="game-card card-paciencia" data-game="paciencia">
+                <div class="card-inner">
+                    <div class="card-visual">
+                        <svg viewBox="0 0 100 100" class="card-icon">
+                            <rect x="20" y="25" width="35" height="50" rx="4" fill="#38ef7d" stroke="#fff" stroke-width="1.5" transform="rotate(-8 35 50)" opacity="0.6" />
+                            <rect x="30" y="20" width="35" height="50" rx="4" fill="#20bf6b" stroke="#fff" stroke-width="1.5" transform="rotate(-4 45 45)" opacity="0.8" />
+                            <rect x="40" y="15" width="35" height="50" rx="4" fill="#11998e" stroke="#fff" stroke-width="2" />
+                            <path d="M57.5 32 C54.5 35 52.5 38 57.5 44 C62.5 38 60.5 35 57.5 32 Z" fill="#fff" />
+                            <path d="M57.5 41 L57.5 46" stroke="#fff" stroke-width="3" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <div class="card-info">
+                        <h3>Paciência</h3>
+                        <p>Ordene as cartas do baralho em ordem crescente por naipes neste clássico jogo individual.</p>
+                        <button class="btn-play">Jogar Agora</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 6: Sequência de Memória -->
             <div class="game-card card-memoria" data-game="memoria">
                 <div class="card-inner">
                     <div class="card-visual">
@@ -45,19 +146,17 @@
                 </div>
             </div>
 
-            <!-- Card 2: Jogo da Cobrinha -->
+            <!-- Card 7: Jogo da Cobrinha -->
             <div class="game-card card-cobrinha" data-game="cobrinha">
                 <div class="card-inner">
                     <div class="card-visual">
                         <svg viewBox="0 0 100 100" class="card-icon">
                             <rect x="10" y="10" width="80" height="80" rx="8" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="2" />
-                            <!-- Snake body representation -->
                             <rect x="20" y="45" width="10" height="10" rx="2" fill="#38ef7d" opacity="0.6" />
                             <rect x="30" y="45" width="10" height="10" rx="2" fill="#38ef7d" opacity="0.8" />
                             <rect x="40" y="45" width="10" height="10" rx="2" fill="#38ef7d" />
                             <rect x="40" y="35" width="10" height="10" rx="2" fill="#11998e" />
                             <circle cx="45" cy="40" r="1.5" fill="#fff" />
-                            <!-- Apple -->
                             <rect x="70" y="35" width="10" height="10" rx="2" fill="#ff4b2b" />
                         </svg>
                     </div>
@@ -69,7 +168,7 @@
                 </div>
             </div>
 
-            <!-- Card 3: Campo Minado -->
+            <!-- Card 8: Campo Minado -->
             <div class="game-card card-campo-minado" data-game="campo-minado">
                 <div class="card-inner">
                     <div class="card-visual">
@@ -79,7 +178,6 @@
                             <line x1="62" y1="15" x2="62" y2="85" stroke="rgba(255,255,255,0.1)" stroke-width="1.5" />
                             <line x1="15" y1="38" x2="85" y2="38" stroke="rgba(255,255,255,0.1)" stroke-width="1.5" />
                             <line x1="15" y1="62" x2="85" y2="62" stroke="rgba(255,255,255,0.1)" stroke-width="1.5" />
-                            <!-- Bomb and flag -->
                             <circle cx="50" cy="50" r="10" fill="#f2994a" />
                             <line x1="50" y1="35" x2="50" y2="65" stroke="#f2994a" stroke-width="3.5" />
                             <line x1="35" y1="50" x2="65" y2="50" stroke="#f2994a" stroke-width="3.5" />
@@ -95,12 +193,11 @@
                 </div>
             </div>
 
-            <!-- Card 4: Tetris -->
+            <!-- Card 9: Tetris -->
             <div class="game-card card-tetris" data-game="tetris">
                 <div class="card-inner">
                     <div class="card-visual">
                         <svg viewBox="0 0 100 100" class="card-icon">
-                            <!-- Falling Tetris pieces -->
                             <rect x="25" y="20" width="16" height="16" rx="2" fill="#9b51e0" stroke="#fff" stroke-width="1" />
                             <rect x="41" y="20" width="16" height="16" rx="2" fill="#9b51e0" stroke="#fff" stroke-width="1" />
                             <rect x="57" y="20" width="16" height="16" rx="2" fill="#9b51e0" stroke="#fff" stroke-width="1" />
@@ -171,6 +268,16 @@
                 <div class="game-frame-glow"></div>
                 <div class="game-frame-content">
                     
+                    <!-- 0. VIEW: Placeholder Coming Soon (For the 5 classic games) -->
+                    <div id="game-view-placeholder" class="game-view hidden">
+                        <div class="placeholder-content">
+                            <div class="placeholder-icon-pulse">🔧</div>
+                            <h2 class="placeholder-title">Construindo o tabuleiro...</h2>
+                            <p class="placeholder-desc">(Em Breve)</p>
+                            <p class="placeholder-status-subtext">A infraestrutura técnica básica está pronta. Nossos robôs desenvolvedores estão programando as regras complexas deste jogo clássico para as próximas fases do Arcade Hub.</p>
+                        </div>
+                    </div>
+
                     <!-- 1. VIEW: Memory Game -->
                     <div id="game-view-memoria" class="game-view hidden">
                         <div class="memory-scores">

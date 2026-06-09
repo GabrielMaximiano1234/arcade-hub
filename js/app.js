@@ -29,6 +29,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Game Configurations (Metadata, Controls, Tutorial Contents)
     const gamesMetadata = {
+        // Placeholder Games (Coming Soon)
+        uno: {
+            title: 'Uno',
+            glowColor: 'rgba(255, 59, 48, 0.45)',
+            viewId: 'game-view-placeholder',
+            builder: () => new PlaceholderGame('Uno')
+        },
+        xadrez: {
+            title: 'Xadrez',
+            glowColor: 'rgba(226, 232, 240, 0.25)',
+            viewId: 'game-view-placeholder',
+            builder: () => new PlaceholderGame('Xadrez')
+        },
+        damas: {
+            title: 'Damas',
+            glowColor: 'rgba(255, 149, 0, 0.4)',
+            viewId: 'game-view-placeholder',
+            builder: () => new PlaceholderGame('Damas')
+        },
+        velha: {
+            title: 'Jogo da Velha',
+            glowColor: 'rgba(0, 242, 254, 0.4)',
+            viewId: 'game-view-placeholder',
+            builder: () => new PlaceholderGame('Jogo da Velha')
+        },
+        paciencia: {
+            title: 'Paciência',
+            glowColor: 'rgba(52, 199, 89, 0.4)',
+            viewId: 'game-view-placeholder',
+            builder: () => new PlaceholderGame('Paciência')
+        },
+        // Active Playable Games
         memoria: {
             title: 'Sequência de Memória',
             icon: '🧠',
@@ -86,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         card.addEventListener('click', () => {
             const gameKey = card.getAttribute('data-game');
             if (gameKey && gamesMetadata[gameKey]) {
-                carregarTutorial(gameKey);
+                carregarJogo(gameKey);
             }
         });
     });
@@ -97,10 +129,10 @@ document.addEventListener('DOMContentLoaded', () => {
     btnIniciarPartida.addEventListener('click', iniciarPartidaAtiva);
 
     /**
-     * Prepares and displays the dynamic tutorial modal for the selected game.
+     * Prepares and displays the game context. Either redirects directly to the placeholder 
+     * or triggers the tutorial modal for playable games.
      */
-    function carregarTutorial(gameKey) {
-        // Safe Cleanup of any prior game loops
+    function carregarJogo(gameKey) {
         limparJogoAtivo();
         activeGameKey = gameKey;
         const meta = gamesMetadata[gameKey];
@@ -111,7 +143,31 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2. Setup ambient neon glow
         gameFrameGlow.style.background = `radial-gradient(circle, ${meta.glowColor}, transparent 70%)`;
 
-        // 3. Populate tutorial information
+        // 3. IF CLASSIC: Bypass tutorial panel, load placeholder view immediately
+        const classicGames = ['uno', 'xadrez', 'damas', 'velha', 'paciencia'];
+        if (classicGames.includes(gameKey)) {
+            menuPrincipal.classList.add('hidden');
+            telaJogo.classList.remove('hidden');
+            tutorialGame.classList.add('hidden');
+            arenaJogo.classList.remove('hidden');
+            btnReiniciar.classList.add('hidden'); // Hide reset button for placeholders
+
+            gameViews.forEach(view => {
+                if (view.id === meta.viewId) {
+                    view.classList.remove('hidden');
+                } else {
+                    view.classList.add('hidden');
+                }
+            });
+
+            activeGameInstance = meta.builder();
+            activeGameInstance.start();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
+        // 4. IF PLAYABLE: Load tutorial modal
+        btnReiniciar.classList.remove('hidden');
         tutorialTitle.textContent = meta.title;
         tutorialIcon.textContent = meta.icon;
         tutorialDesc.textContent = meta.description;
@@ -124,13 +180,12 @@ document.addEventListener('DOMContentLoaded', () => {
             tutorialControlsList.appendChild(li);
         });
 
-        // 4. Update screen layouts
+        // Toggle layouts
         menuPrincipal.classList.add('hidden');
         telaJogo.classList.remove('hidden');
         tutorialGame.classList.remove('hidden');
         arenaJogo.classList.add('hidden');
 
-        // Scroll view to top
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -189,6 +244,36 @@ document.addEventListener('DOMContentLoaded', () => {
         activeGameKey = null;
     }
 });
+
+
+// ==========================================================================
+// GAME 0: CLASSIC GAME PLACEHOLDER ENGINE
+// ==========================================================================
+class PlaceholderGame {
+    constructor(name) {
+        this.name = name;
+    }
+    start() {
+        // Set dynamic text for placeholder
+        const iconPulse = document.querySelector('.placeholder-icon-pulse');
+        const descText = document.querySelector('.placeholder-desc');
+        
+        // Custom emoji icons based on classic game selected
+        const icons = {
+            'Uno': '🃏',
+            'Xadrez': '👑',
+            'Damas': '🔴',
+            'Jogo da Velha': '❌',
+            'Paciência': '🃏'
+        };
+        
+        if (iconPulse) iconPulse.textContent = icons[this.name] || '🔧';
+        if (descText) descText.textContent = `${this.name} - Em Breve`;
+    }
+    cleanup() {
+        // No loops to clear
+    }
+}
 
 
 // ==========================================================================

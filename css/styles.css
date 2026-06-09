@@ -1,4 +1,4 @@
-/* ARCADE HUB - UNIFIED PREMIUM STYLE SHEET */
+/* ARCADE HUB - UNIFIED MEGA STYLESHEET (9 GAMES) */
 
 /* Root variables defining color tokens and theme values */
 :root {
@@ -17,9 +17,29 @@
     --transition-normal: 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
     --transition-slow: 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 
-    /* Game-specific variables */
-    --memoria-color: #ff3b30;
-    --memoria-glow: rgba(255, 59, 48, 0.4);
+    /* 9 Games Variables */
+    --uno-color: #ff3b30;
+    --uno-glow: rgba(255, 59, 48, 0.45);
+    --uno-gradient: linear-gradient(135deg, #ff416c, #ff4b2b);
+
+    --xadrez-color: #e2e8f0;
+    --xadrez-glow: rgba(226, 232, 240, 0.25);
+    --xadrez-gradient: linear-gradient(135deg, #e0e0e0, #2c3e50);
+
+    --damas-color: #ff9500;
+    --damas-glow: rgba(255, 149, 0, 0.4);
+    --damas-gradient: linear-gradient(135deg, #f2994a, #f2c94c);
+
+    --velha-color: #00f2fe;
+    --velha-glow: rgba(0, 242, 254, 0.45);
+    --velha-gradient: linear-gradient(135deg, #00f2fe, #4facfe);
+
+    --paciencia-color: #34c759;
+    --paciencia-glow: rgba(52, 199, 89, 0.4);
+    --paciencia-gradient: linear-gradient(135deg, #11998e, #38ef7d);
+
+    --memoria-color: #ff4b2b;
+    --memoria-glow: rgba(255, 75, 43, 0.4);
     --memoria-gradient: linear-gradient(135deg, #ff416c, #ff4b2b);
 
     --cobrinha-color: #38ef7d;
@@ -108,7 +128,7 @@ body {
 /* Elegant header */
 .app-header {
     text-align: center;
-    margin-bottom: 4rem;
+    margin-bottom: 3.5rem;
 }
 
 .logo-title {
@@ -152,7 +172,7 @@ body {
 /* Responsive grid layout */
 .grid-games {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
     gap: 2rem;
     justify-content: center;
     align-items: stretch;
@@ -243,22 +263,96 @@ body {
     transform: scale(1.02);
 }
 
-/* CARD THEMES HOVER */
-/* 1. MEMORIA */
+/* 9 CARDS THEMES HOVER STATE DEFINITIONS */
+/* 1. UNO */
+.card-uno:hover {
+    border-color: var(--uno-color);
+    box-shadow: 0 10px 30px var(--uno-glow);
+    transform: translateY(-8px);
+}
+.card-uno:hover .card-visual { background: rgba(255, 59, 48, 0.06); }
+.card-uno:hover .card-icon { transform: scale(1.08) rotate(-5deg); }
+.card-uno:hover h3 { color: var(--uno-color); }
+.card-uno:hover .btn-play {
+    background: var(--uno-gradient);
+    box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4);
+}
+
+/* 2. XADREZ */
+.card-xadrez:hover {
+    border-color: var(--xadrez-color);
+    box-shadow: 0 10px 30px var(--xadrez-glow);
+    transform: translateY(-8px);
+}
+.card-xadrez:hover .card-visual { background: rgba(226, 232, 240, 0.05); }
+.card-xadrez:hover .card-icon { transform: scale(1.08) translateY(-4px); }
+.card-xadrez:hover h3 { color: var(--xadrez-color); }
+.card-xadrez:hover .btn-play {
+    background: var(--xadrez-gradient);
+    color: #0c0f16;
+    box-shadow: 0 4px 15px rgba(226, 232, 240, 0.3);
+}
+
+/* 3. DAMAS */
+.card-damas:hover {
+    border-color: var(--damas-color);
+    box-shadow: 0 10px 30px var(--damas-glow);
+    transform: translateY(-8px);
+}
+.card-damas:hover .card-visual { background: rgba(255, 149, 0, 0.06); }
+.card-damas:hover .card-icon { transform: scale(1.08) rotate(5deg); }
+.card-damas:hover h3 { color: var(--damas-color); }
+.card-damas:hover .btn-play {
+    background: var(--damas-gradient);
+    color: #0c0f16;
+    box-shadow: 0 4px 15px rgba(255, 149, 0, 0.4);
+}
+
+/* 4. JOGO DA VELHA */
+.card-velha:hover {
+    border-color: var(--velha-color);
+    box-shadow: 0 10px 30px var(--velha-glow);
+    transform: translateY(-8px);
+}
+.card-velha:hover .card-visual { background: rgba(0, 242, 254, 0.06); }
+.card-velha:hover .card-icon { transform: scale(1.08) rotate(8deg); }
+.card-velha:hover h3 { color: var(--velha-color); }
+.card-velha:hover .btn-play {
+    background: var(--velha-gradient);
+    color: #0c0f16;
+    box-shadow: 0 4px 15px rgba(0, 242, 254, 0.4);
+}
+
+/* 5. PACIÊNCIA */
+.card-paciencia:hover {
+    border-color: var(--paciencia-color);
+    box-shadow: 0 10px 30px var(--paciencia-glow);
+    transform: translateY(-8px);
+}
+.card-paciencia:hover .card-visual { background: rgba(52, 199, 89, 0.06); }
+.card-paciencia:hover .card-icon { transform: scale(1.08) translateY(-2px) rotate(-3deg); }
+.card-paciencia:hover h3 { color: var(--paciencia-color); }
+.card-paciencia:hover .btn-play {
+    background: var(--paciencia-gradient);
+    color: #0c0f16;
+    box-shadow: 0 4px 15px rgba(52, 199, 89, 0.4);
+}
+
+/* 6. MEMORIA */
 .card-memoria:hover {
     border-color: var(--memoria-color);
     box-shadow: 0 10px 30px var(--memoria-glow);
     transform: translateY(-8px);
 }
-.card-memoria:hover .card-visual { background: rgba(255, 59, 48, 0.06); }
+.card-memoria:hover .card-visual { background: rgba(255, 75, 43, 0.06); }
 .card-memoria:hover .card-icon { transform: scale(1.08) rotate(5deg); }
 .card-memoria:hover h3 { color: var(--memoria-color); }
 .card-memoria:hover .btn-play {
     background: var(--memoria-gradient);
-    box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4);
+    box-shadow: 0 4px 15px rgba(255, 75, 43, 0.4);
 }
 
-/* 2. COBRINHA */
+/* 7. COBRINHA */
 .card-cobrinha:hover {
     border-color: var(--cobrinha-color);
     box-shadow: 0 10px 30px var(--cobrinha-glow);
@@ -273,7 +367,7 @@ body {
     box-shadow: 0 4px 15px rgba(56, 239, 125, 0.4);
 }
 
-/* 3. CAMPO MINADO */
+/* 8. CAMPO MINADO */
 .card-campo-minado:hover {
     border-color: var(--campo-minado-color);
     box-shadow: 0 10px 30px var(--campo-minado-glow);
@@ -288,7 +382,7 @@ body {
     box-shadow: 0 4px 15px rgba(255, 149, 0, 0.4);
 }
 
-/* 4. TETRIS */
+/* 9. TETRIS */
 .card-tetris:hover {
     border-color: var(--tetris-color);
     box-shadow: 0 10px 30px var(--tetris-glow);
@@ -545,6 +639,54 @@ body {
     font-size: 0.88rem;
     margin-top: 1.2rem;
     text-align: center;
+}
+
+/* ==========================================================================
+   GAME 0: CLASSIC GAME PLACEHOLDER (COMING SOON)
+   ========================================================================== */
+.placeholder-content {
+    text-align: center;
+    padding: 3rem;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.2rem;
+}
+
+.placeholder-icon-pulse {
+    font-size: 3.8rem;
+    margin-bottom: 0.5rem;
+    animation: pulseIcon 2s infinite ease-in-out;
+}
+
+@keyframes pulseIcon {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(242, 153, 74, 0.2)); }
+    50% { transform: scale(1.15); filter: drop-shadow(0 0 15px rgba(242, 153, 74, 0.6)); }
+}
+
+.placeholder-title {
+    font-size: 2.1rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #ffffff, #94a3b8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+}
+
+.placeholder-desc {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #f2994a;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.placeholder-status-subtext {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    margin-top: 0.5rem;
 }
 
 /* ==========================================================================
@@ -814,7 +956,7 @@ canvas {
         font-size: 2.5rem;
     }
     .grid-games {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 1.5rem;
     }
     .game-screen-header {
